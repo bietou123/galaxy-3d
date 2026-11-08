@@ -140,6 +140,8 @@
   #info {
     position: fixed; top: 24px; right: 26px; width: 336px; z-index: 25;
     padding-bottom: 16px; overflow: hidden;
+    max-height: calc(100vh - 48px); overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: rgba(110,160,230,.28) transparent;
     opacity: 0; transform: translateX(26px); pointer-events: none;
     transition: opacity .34s cubic-bezier(.22,1,.36,1),
                 transform .34s cubic-bezier(.22,1,.36,1);
@@ -182,6 +184,27 @@
   #desc {
     margin: 15px 20px 17px; font-size: 12.5px; line-height: 1.8;
     color: #AFBFD2; letter-spacing: .01em;
+  }
+
+  /* ---------- 历史与人文 ---------- */
+  #histWrap {
+    margin: 0 20px 16px; border-top: 1px solid var(--line); padding-top: 12px;
+  }
+  #histWrap.hide { display: none; }
+  #histHead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    font-size: 10px; letter-spacing: .22em; color: var(--accent);
+    margin-bottom: 7px;
+  }
+  #histHead span { font-size: 8.5px; letter-spacing: .30em; color: var(--dim2); }
+  #histText {
+    margin: 0; font-size: 12px; line-height: 1.85; color: #94A7BD;
+    max-height: 168px; overflow-y: auto; padding-right: 4px;
+    scrollbar-width: thin; scrollbar-color: rgba(110,160,230,.28) transparent;
+  }
+  #histText::-webkit-scrollbar { width: 5px; }
+  #histText::-webkit-scrollbar-thumb {
+    background: rgba(110,160,230,.28); border-radius: 3px;
   }
   #btnReset {
     display: block; width: calc(100% - 40px); margin: 0 20px; padding: 9px;
@@ -327,6 +350,67 @@
     font-size: 14px; line-height: 2.1; text-align: center;
   }
 
+  /* ---------- 帮助面板 ---------- */
+  #help {
+    position: fixed; left: 50%; top: 50%; z-index: 35;
+    width: min(430px, calc(100vw - 40px)); max-height: 82vh;
+    padding: 20px 22px 14px; overflow-y: auto; border-radius: 16px;
+    opacity: 0; pointer-events: none;
+    transform: translate(-50%, -46%) scale(.97);
+    transition: opacity .26s cubic-bezier(.22,1,.36,1),
+                transform .26s cubic-bezier(.22,1,.36,1);
+    scrollbar-width: thin; scrollbar-color: rgba(110,160,230,.28) transparent;
+  }
+  #help.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+  #help h3 {
+    margin: 0 0 14px; padding-right: 30px; font-size: 13px; font-weight: 600;
+    letter-spacing: .18em; color: var(--text);
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  #help h3 span { font-size: 9px; font-weight: 400; letter-spacing: .30em; color: var(--dim2); }
+  #help dl { margin: 0; }
+  #help dl div {
+    display: flex; gap: 12px; align-items: baseline;
+    padding: 5px 0; border-bottom: 1px solid rgba(110,160,230,.07);
+  }
+  #help dl div:last-child { border-bottom: none; }
+  #help dt {
+    flex: none; width: 118px; font-size: 11.5px;
+    color: var(--accent); letter-spacing: .04em;
+  }
+  #help dd { margin: 0; font-size: 11.5px; line-height: 1.6; color: #A6B7CB; }
+  #closeHelp {
+    position: absolute; top: 10px; right: 12px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(0, 0, 0, .32); border: 1px solid var(--line);
+    color: var(--text); font-size: 14px; line-height: 1; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  #closeHelp:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--line-hot); }
+
+  /* ---------- 工具按钮 ---------- */
+  #btnShot { display: flex; align-items: center; padding: 6px 9px; }
+  #btnShot svg { width: 15px; height: 15px; display: block; }
+  #btnHelp { padding: 6px 10px; font-variant-numeric: tabular-nums; }
+
+  /* ---------- 演示模式提示 ---------- */
+  #demoHint {
+    position: fixed; right: 26px; bottom: 26px; z-index: 30;
+    font-size: 11px; letter-spacing: .22em; color: var(--dim2);
+    opacity: 0; transition: opacity .6s ease; pointer-events: none;
+    text-shadow: 0 0 14px rgba(0, 0, 0, .9);
+  }
+  #demoHint.show { opacity: .6; }
+
+  /* ---------- 演示模式：只留三维场景 ---------- */
+  #brand, #sidebar, #legend { transition: opacity .45s ease; }
+  body.demo #sidebar,
+  body.demo #info,
+  body.demo #bar,
+  body.demo #legend,
+  body.demo #labels,
+  body.demo #brand { opacity: 0 !important; pointer-events: none !important; }
+
   /* ---------- 响应式 ---------- */
   @media (max-width: 1180px) {
     #sidebar { width: 222px; }
@@ -388,6 +472,10 @@
   <p id="infoEn"></p>
   <div id="stats"></div>
   <p id="desc"></p>
+  <div id="histWrap">
+    <div id="histHead">历史与人文<span>HISTORY</span></div>
+    <p id="histText"></p>
+  </div>
   <button id="btnReset">复位视角</button>
 </aside>
 
@@ -406,7 +494,41 @@
   <label class="tog">
     <input type="checkbox" id="chkName" checked><span class="sw"></span><span>名称</span>
   </label>
+  <div class="sep"></div>
+  <button id="btnShot" class="btn" title="保存 PNG 截图（不含界面元素）">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h1.1a2 2 0 0 0 1.7-.9l.5-.8A2 2 0 0 1 10.5 3.5h3a2 2 0 0 1 1.7.8l.5.8a2 2 0 0 0 1.7.9h1.1A2.5 2.5 0 0 1 21 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z"/>
+      <circle cx="12" cy="12.2" r="3.6"/>
+    </svg>
+  </button>
+  <button id="btnHelp" class="btn" title="操作说明（?）">?</button>
 </div>
+
+<div id="help" class="glass">
+  <button id="closeHelp" title="关闭">×</button>
+  <h3>操作说明<span>CONTROLS</span></h3>
+  <dl>
+    <div><dt>拖动</dt><dd>绕目标旋转视角</dd></div>
+    <div><dt>Shift / 右键拖动</dt><dd>沿屏幕平移视角</dd></div>
+    <div><dt>滚轮 / 双指</dt><dd>缩放；缩到底自动进入下一层</dd></div>
+    <div><dt>单击空白</dt><dd>朝该点推进一级</dd></div>
+    <div><dt>单击行星</dt><dd>聚焦并查看历史与人文</dd></div>
+    <div><dt>双击</dt><dd>银河中快速推进；行星上贴近查看细节</dd></div>
+    <div><dt>方向键 / WASD</dt><dd>平移视角</dd></div>
+    <div><dt>+ / −</dt><dd>缩放视角</dd></div>
+    <div><dt>R</dt><dd>复位视角</dd></div>
+    <div><dt>Esc</dt><dd>逐级退出：帮助 → 演示 → 聚焦 → 银河</dd></div>
+    <div><dt>空格</dt><dd>暂停 / 继续公转</dd></div>
+    <div><dt>H</dt><dd>演示模式（隐藏全部界面）</dd></div>
+    <div><dt>F</dt><dd>聚焦画面中心最近的天体</dd></div>
+    <div><dt>0 – 8</dt><dd>直达太阳与八大行星</dd></div>
+    <div><dt>[ / ]</dt><dd>时间流速 1× / 10× / 100×</dd></div>
+    <div><dt>? 或 /</dt><dd>开关本说明</dd></div>
+  </dl>
+</div>
+
+<div id="demoHint">按 H 退出演示</div>
 
 <div id="legend" class="glass">
   <button id="legendBtn">图例 ▾</button>
@@ -442,10 +564,10 @@
 
 var CFG = {
   galaxy: {
-    particles:  200000,       // 银河粒子总数
-    dust:       36000,        // 暗尘带粒子（反向减法绘制）
-    bgStars:    6000,         // 远景星空（不随星系旋转）
-    texSize:    1024,         // 盘面纹理边长（2 的幂，需要生成 mipmap）
+    particles:  340000,       // 银河粒子总数
+    dust:       64000,        // 暗尘带粒子（反向减法绘制）
+    bgStars:    12000,        // 远景星空（不随星系旋转）
+    texSize:    2048,         // 盘面纹理边长（2 的幂，需要生成 mipmap）
     radius:     2500,         // 星系半径（世界单位）
     armA:       60,           // 对数螺旋 r = a·e^(bθ)
     armB:       0.28,
@@ -457,8 +579,9 @@ var CFG = {
     camRadius:  3600,
     camPhi:     1.107,        // 约 63.4°，接近侧面俯视银河的标准视角
     camTheta:   Math.PI / 2,
-    minR:       420,
+    minR:       250,
     maxR:       7000,
+    diveR:      300,          // 放大到这个距离就自动下钻进太阳系
     atten:      6000          // 粒子尺寸的距离衰减系数
   },
   solar: {
@@ -472,7 +595,8 @@ var CFG = {
     camPhi:     1.03,
     camTheta:   Math.PI / 2,
     minR:       18,
-    maxR:       950
+    maxR:       950,
+    diveR:      44            // 放大到这个距离且屏幕中心有行星就自动聚焦
   },
   camera: { fov: 55 * Math.PI / 180, near: 0.5, far: 50000 },
   tween:  { layer: 1700, focus: 1200 }
@@ -684,7 +808,12 @@ var SUN = {
   diameter: 1392700, orbitDays: null, rotationHours: 609.12,
   au: 0, moons: null, color: '#FFF4D0',
   desc: '太阳系中心天体，占系统总质量的 99.86%。核心的氢核聚变每秒把约 400 万吨物质转化为能量，' +
-        '维持着地球上的全部生命。表面温度约 5500℃，核心温度可达 1500 万度。'
+        '维持着地球上的全部生命。表面温度约 5500℃，核心温度可达 1500 万度。',
+  history: '人类对太阳的敬畏贯穿全部早期文明：中国有「羲和御日」，埃及奉拉神为日轮，希腊的赫利俄斯驾车巡天。' +
+           '1543 年哥白尼把太阳放到宇宙中心，动摇了统治千年的地心说；1610 年伽利略用望远镜看到太阳黑子，' +
+           '证明所谓「完美天体」也会变化。1920 年爱丁顿提出太阳靠核聚变发光，从此恒星的能量来源才被真正理解。' +
+           '1995 年 SOHO 探测器升空，二十余年不间断监视日冕；2018 年帕克太阳探测器出发，2024 年穿越日冕，' +
+           '成为人类造出的离太阳最近的物体。'
 };
 
 var PLANETS = [
@@ -694,7 +823,11 @@ var PLANETS = [
     au: 0.387, moons: 0, color: '#9A8B7E',
     band: '#776A5E', seed: 11, bands: 4, tilt: 0.03, orbitTilt: 0.028,
     desc: '太阳系最小、最靠近太阳的行星。几乎没有大气，向阳面可达 430℃，背阳面降至 −180℃，' +
-          '昼夜温差冠绝太阳系。表面布满环形山，与月球颇为相似。'
+          '昼夜温差冠绝太阳系。表面布满环形山，与月球颇为相似。',
+    history: '古代中国称它为「辰星」，只在晨昏时分贴近地平线才可见，因此古人认为它「位卑而近君」。' +
+             '西名 Mercury 取自罗马信使神。1889 年意大利天文学家斯基亚帕雷利曾断定水星自转与公转同步，' +
+             '这个错误保持了七十六年，直到 1965 年雷达测距才被推翻。1974 年水手 10 号首次飞掠，' +
+             '拍回满目环形山的地表；2011 年信使号成为首个环绕水星的探测器，2015 年燃料耗尽撞向地表。'
   },
   {
     id: 'venus', zh: '金星', en: 'Venus',
@@ -702,7 +835,11 @@ var PLANETS = [
     au: 0.723, moons: 0, color: '#E8C48A',
     band: '#C9A46A', seed: 23, bands: 7, tilt: 2.64, orbitTilt: 0.018, retro: true,
     desc: '被约 90 倍地球大气压的二氧化碳大气包裹，温室效应使地表温度高达 465℃，比水星更热。' +
-          '自转方向与绝大多数行星相反，一个金星日比一个金星年还长。'
+          '自转方向与绝大多数行星相反，一个金星日比一个金星年还长。',
+    history: '中国古代的「启明」与「长庚」其实是同一颗星，只因出现于晨昏而在先秦被当成两颗。' +
+             '巴比伦人把它献给爱与战争之神伊什塔尔。1610 年伽利略用望远镜第一次看到金星的位相变化，' +
+             '这成为日心说的关键证据之一。1962 年水手 2 号飞掠，测出它表面温度远超预想；' +
+             '1970 年苏联金星 7 号首次在金星地表软着陆并传回数据，此后麦哲伦号用雷达穿透云层绘出全貌。'
   },
   {
     id: 'earth', zh: '地球', en: 'Earth',
@@ -710,7 +847,11 @@ var PLANETS = [
     au: 1.000, moons: 1, color: '#2E6BC4',
     band: '#1B4FA0', seed: 37, bands: 0, tilt: 23.44, orbitTilt: 0, earth: true,
     desc: '目前已知唯一存在生命的天体。71% 的表面被液态水覆盖，磁场与大气层共同抵御太阳风，' +
-          '并拥有一颗体积异常巨大的卫星——月球，它稳定着地球的自转轴倾角。'
+          '并拥有一颗体积异常巨大的卫星——月球，它稳定着地球的自转轴倾角。',
+    history: '「地球」这个词直到近代才被当作一颗星来看待——在此之前，人类并不认为脚下的大地也是天体。' +
+             '1957 年人造卫星升空后，人类第一次从外面回望自己：1968 年阿波罗 8 号在绕月途中拍下「地出」，' +
+             '1972 年阿波罗 17 号拍下的「蓝色弹珠」成为环保运动的象征。1969 年阿姆斯特朗踏上月面，' +
+             '那句「个人一小步，人类一大步」通过电视传遍全球；此后国际空间站连续载人驻留至今。'
   },
   {
     id: 'mars', zh: '火星', en: 'Mars',
@@ -718,7 +859,12 @@ var PLANETS = [
     au: 1.524, moons: 2, color: '#C1613A',
     band: '#8F4527', seed: 53, bands: 3, tilt: 25.19, orbitTilt: 0.032,
     desc: '表面氧化铁使其呈现锈红色，因此被称为红色星球。拥有太阳系最高的火山奥林帕斯山' +
-          '（约 22 公里）与最长的峡谷水手大峡谷，两极存在由水冰与干冰构成的极冠。'
+          '（约 22 公里）与最长的峡谷水手大峡谷，两极存在由水冰与干冰构成的极冠。',
+    history: '中国古称「荧惑」，因其荧荧似火、行踪忽前忽后而被视为战乱之兆。' +
+             '1877 年斯基亚帕雷利把观测到的暗纹称作「水道」，英文误译成「运河」，' +
+             '由此点燃了半个世纪的火星人想象；1938 年奥森·威尔斯的广播剧甚至让部分听众信以为真。' +
+             '1976 年海盗 1 号首次成功着陆，1997 年探路者带来第一辆火星车，' +
+             '2012 年好奇号、2021 年毅力号相继抵达，后者携带的机智号直升机完成了地外首次动力飞行。'
   },
   {
     id: 'jupiter', zh: '木星', en: 'Jupiter',
@@ -726,7 +872,12 @@ var PLANETS = [
     au: 5.204, moons: 95, color: '#C9A87C',
     band: '#A07A4E', seed: 71, bands: 13, tilt: 3.13, orbitTilt: 0.022, spot: true,
     desc: '太阳系最大的行星，质量是其余七颗行星总和的 2.4 倍。大红斑是一场持续了至少数百年的' +
-          '反气旋风暴，直径足以容纳整个地球。自转极快，一个昼夜不到十小时。'
+          '反气旋风暴，直径足以容纳整个地球。自转极快，一个昼夜不到十小时。',
+    history: '中国古称「岁星」，因为它在天球上约十二年绕行一周，古人据此纪年，' +
+             '「岁星纪年」因此成为先秦历法的骨干。1610 年伽利略用自制望远镜发现四颗卫星，' +
+             '证明并非所有天体都绕地球转，成为日心说的铁证。1665 年卡西尼记录下大红斑，' +
+             '它至今仍未被吹散。1979 年旅行者 1 号首次近距离成像，1994 年苏梅克-列维 9 号彗星撞击木星，' +
+             '留下地球大小的撞击痕迹；2011 年朱诺号抵达，正在测绘其内部结构与磁场。'
   },
   {
     id: 'saturn', zh: '土星', en: 'Saturn',
@@ -734,7 +885,12 @@ var PLANETS = [
     au: 9.583, moons: 146, color: '#E0C894',
     band: '#C0A26A', seed: 89, bands: 10, tilt: 26.73, orbitTilt: 0.043, ring: true,
     desc: '以壮观的环系统著称。环主要由水冰颗粒与岩屑构成，横跨约 28 万公里，' +
-          '而平均厚度不足百米。土星是太阳系中平均密度最小的行星，密度小于水。'
+          '而平均厚度不足百米。土星是太阳系中平均密度最小的行星，密度小于水。',
+    history: '中国古称「镇星」，因它二十八年半绕天一周、每年镇守一个星宿而得名。' +
+             '1610 年伽利略透过望远镜看到土星两侧的「耳朵」，却因仪器太差而误以为那是卫星，' +
+             '甚至在自己笔记里画成两个圆。1655 年惠更斯用更好的镜子认出那是一圈环，' +
+             '1675 年卡西尼发现环被一道缝隙分成两半，这条缝至今以他的名字命名。' +
+             '1980 年旅行者 1 号飞掠，2004 年卡西尼号抵达并释放惠更斯探测器，首次降落在土卫六表面。'
   },
   {
     id: 'uranus', zh: '天王星', en: 'Uranus',
@@ -743,7 +899,12 @@ var PLANETS = [
     band: '#7DC8D4', seed: 103, bands: 3, tilt: 97.77, orbitTilt: 0.014,
     retro: true, faintRing: true,
     desc: '自转轴倾斜约 98°，几乎「躺」在轨道面上滚动，导致两极各有约 42 年的极昼与极夜。' +
-          '大气中的甲烷吸收红光，使其呈现出独特的青蓝色。'
+          '大气中的甲烷吸收红光，使其呈现出独特的青蓝色。',
+    history: '天王星是历史上第一颗用望远镜发现的行星。1781 年赫歇尔在自己的后院望远镜里看到它，' +
+             '最初报告为一颗彗星，后来才确认是行星；它的名字经过多年争论，最终沿用希腊天空之神乌拉诺斯。' +
+             '有趣的是，天文学家弗拉姆斯蒂德早在 1690 年就记录过它，却把它当成了一颗恒星。' +
+             '1977 年天文学家在它掩食恒星时发现了环，1986 年旅行者 2 号飞掠，' +
+             '拍下了几乎没有任何特征的青蓝色圆面——那是人类唯一一次近距离看它。'
   },
   {
     id: 'neptune', zh: '海王星', en: 'Neptune',
@@ -751,7 +912,11 @@ var PLANETS = [
     au: 30.07, moons: 16, color: '#3D63C9',
     band: '#2C4A9E', seed: 127, bands: 3, tilt: 28.32, orbitTilt: 0.031,
     desc: '距太阳最远的行星，是人类先用数学计算预测、随后才观测到的天体。' +
-          '大气风速可达每小时 2100 公里，是太阳系中最猛烈的风。'
+          '大气风速可达每小时 2100 公里，是太阳系中最猛烈的风。',
+    history: '海王星被称为「笔尖上发现的行星」。天王星轨道出现异常，法国人勒维耶与英国人亚当斯' +
+             '各自独立算出有一颗未知行星在扰动它；1846 年，勒维耶把预测位置寄给柏林天文台的伽勒，' +
+             '后者当晚就在不到一度的范围内找到了它。名字与发现权随即引发英法两国长达数十年的争执。' +
+             '1989 年旅行者 2 号飞掠，拍下大暗斑与高空云带；2011 年，它自 1846 年被发现以来第一次完成绕日一周。'
   }
 ];
 
@@ -1033,9 +1198,12 @@ var BODY_FS = [
   '  float diff = ndl * 0.86 + wrap * wrap * 0.14;',
   '  vec3 V = normalize(uCamPos - vPosW);',
   '  float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0) * 0.16;',
+  // 高光：冰壳与大气会让朝向光源的那一小块明显更亮，近景时是「球」不是「圆」
+  '  vec3 H = normalize(L + V);',
+  '  float spec = pow(max(dot(N, H), 0.0), 28.0) * 0.22;',
   // 环境项抬到 0.155：太空场景里行星背光面完全死黑会显得像个黑饼，
   // 留一点底光才看得出球体和纹理。
-  '  vec3 col = base * (0.155 + diff * 1.10) + base * rim;',
+  '  vec3 col = base * (0.155 + diff * 1.10) + base * rim + vec3(spec);',
   '  gl_FragColor = vec4(col, uOpacity);',
   '}'
 ].join('\n');
@@ -1215,8 +1383,8 @@ function buildOrbitLine(radius, segments, tiltX) {
  * ========================================================================== */
 
 function makePlanetPixels(spec) {
-  var W = spec.earth ? 256 : 128;
-  var H = spec.earth ? 128 : 64;
+  var W = spec.earth ? 1024 : 512;
+  var H = spec.earth ? 512 : 256;
   var data = new Uint8Array(W * H * 4);
 
   var base = hexToRgb(spec.color);
@@ -1328,7 +1496,7 @@ function makePlanetPixels(spec) {
 
 /** 太阳表面：亮黄底 + 米粒组织噪声 */
 function makeSunPixels() {
-  var W = 128, H = 64;
+  var W = 512, H = 256;
   var data = new Uint8Array(W * H * 4);
   for (var y = 0; y < H; y++) {
     for (var x = 0; x < W; x++) {
@@ -1358,6 +1526,15 @@ function createTexture(width, height, pixels) {
   // 边长都是 2 的幂，可以安全生成 mipmap，避免远距离时出现摩尔纹
   gl.generateMipmap(gl.TEXTURE_2D);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+  // 斜视时各向异性过滤能显著减少远处旋臂的模糊与拉丝
+  var aniso = gl.getExtension('EXT_texture_filter_anisotropic') ||
+              gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic');
+  if (aniso) {
+    var maxAniso = gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+    gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT,
+                     Math.min(16, maxAniso));
+  }
   return tex;
 }
 
@@ -1899,16 +2076,81 @@ function computeEye() {
 }
 
 /* ---- 鼠标 / 触摸拖拽 ---- */
-var drag = { active: false, id: -1, x: 0, y: 0, moved: 0 };
-var pinch = { active: false, dist: 0 };
+/* ---- 鼠标 / 触摸拖拽 ----
+   左键拖动 = 绕目标旋转；右键 / 中键 / Shift+左键 = 沿屏幕 X·Y 平移。 */
+var drag = { active: false, id: -1, x: 0, y: 0, moved: 0, mode: 'orbit' };
+var pinch = { active: false, dist: 0, cx: 0, cy: 0 };
+var panLimit = { galaxy: 2300, solar: 240 };
+
+function clampTarget() {
+  if (state !== ST.GALAXY && state !== ST.SOLAR) return;
+  var lim = (state === ST.GALAXY) ? panLimit.galaxy : panLimit.solar;
+  var m = Math.hypot(cam.tTarget[0], cam.tTarget[2]);
+  if (m > lim) {
+    var k = lim / m;
+    cam.tTarget[0] *= k; cam.tTarget[2] *= k;
+    cam.target[0] = cam.tTarget[0]; cam.target[2] = cam.tTarget[2];
+  }
+  cam.tTarget[1] = clamp(cam.tTarget[1], -lim * 0.6, lim * 0.6);
+  cam.target[1] = cam.tTarget[1];
+}
+
+/** 相机基向量：前进 f、右 r、上 u（世界坐标，均为单位向量） */
+function camBasis() {
+  camBasis._f = camBasis._f || [0, 0, 0];
+  camBasis._r = camBasis._r || [0, 0, 0];
+  camBasis._u = camBasis._u || [0, 0, 0];
+  var f = camBasis._f, r = camBasis._r, u = camBasis._u;
+
+  f[0] = cam.target[0] - cam.eye[0];
+  f[1] = cam.target[1] - cam.eye[1];
+  f[2] = cam.target[2] - cam.eye[2];
+  var fl = Math.hypot(f[0], f[1], f[2]) || 1;
+  f[0] /= fl; f[1] /= fl; f[2] /= fl;
+
+  var upRef = (cam.phi < 0.12 || cam.phi > Math.PI - 0.12) ? UP_Z : UP_Y;
+  r[0] = f[1] * upRef[2] - f[2] * upRef[1];
+  r[1] = f[2] * upRef[0] - f[0] * upRef[2];
+  r[2] = f[0] * upRef[1] - f[1] * upRef[0];
+  var rl = Math.hypot(r[0], r[1], r[2]) || 1;
+  r[0] /= rl; r[1] /= rl; r[2] /= rl;
+
+  u[0] = r[1] * f[2] - r[2] * f[1];
+  u[1] = r[2] * f[0] - r[0] * f[2];
+  u[2] = r[0] * f[1] - r[1] * f[0];
+
+  return camBasis;
+}
+
+/** 按屏幕像素位移平移观察目标（1:1 跟手，不走阻尼） */
+function panCamera(dx, dy) {
+  if (state !== ST.GALAXY && state !== ST.SOLAR) return;
+
+  // 目标平面上一像素对应的世界长度
+  var k = 2 * Math.tan(CFG.camera.fov * 0.5) * cam.radius / Math.max(1, screenH);
+  camBasis();
+  var r = camBasis._r, u = camBasis._u;
+
+  for (var i = 0; i < 3; i++) {
+    var d = -r[i] * dx * k + u[i] * dy * k;
+    cam.tTarget[i] += d;
+    cam.target[i] += d;
+  }
+  clampTarget();
+  computeEye();
+}
+
+canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
 canvas.addEventListener('pointerdown', function (e) {
-  if (!cam.enabled || drag.active) return;
+  if (!cam.enabled) { drag.moved = 0; return; }
+  if (drag.active) return;
   drag.active = true;
   drag.id = e.pointerId;
   drag.x = e.clientX;
   drag.y = e.clientY;
   drag.moved = 0;
+  drag.mode = (e.button === 2 || e.button === 1 || e.shiftKey) ? 'pan' : 'orbit';
   canvas.classList.add('dragging');
   try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
 });
@@ -1920,9 +2162,13 @@ canvas.addEventListener('pointermove', function (e) {
   var dy = e.clientY - drag.y;
   drag.moved += Math.abs(dx) + Math.abs(dy);
 
-  var speed = 0.0042;
-  cam.tTheta -= dx * speed;
-  cam.tPhi = clamp(cam.tPhi - dy * speed, MIN_PHI, MAX_PHI);
+  if (drag.mode === 'pan') {
+    panCamera(dx, dy);
+  } else {
+    var speed = 0.0042;
+    cam.tTheta -= dx * speed;
+    cam.tPhi = clamp(cam.tPhi - dy * speed, MIN_PHI, MAX_PHI);
+  }
 
   drag.x = e.clientX;
   drag.y = e.clientY;
@@ -1939,15 +2185,43 @@ function endDrag(e) {
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
-/* ---- 滚轮缩放 ---- */
+/* ---- 滚轮缩放（滚到底自动下钻到下一层） ---- */
 canvas.addEventListener('wheel', function (e) {
   e.preventDefault();
   if (!cam.enabled) return;
   var delta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
-  cam.tRadius = clamp(cam.tRadius * Math.exp(delta * 0.0011), cam.minR, cam.maxR);
+  cam.tRadius = clamp(cam.tRadius * Math.exp(delta * 0.0014), cam.minR, cam.maxR);
+
+  // 银河层一路放大：贴到阈值就钻进猎户臂
+  if (state === ST.GALAXY && cam.tRadius <= CFG.galaxy.diveR) {
+    diveToSolar();
+    return;
+  }
+
+  // 太阳系层一路放大：凑近某颗行星就自动聚焦
+  if (state === ST.SOLAR && cam.tRadius <= CFG.solar.diveR) {
+    var b = bodyNearScreenPoint(screenW * 0.5, screenH * 0.5, 110);
+    if (b) focusBody(b.spec.id);
+  }
+
+  scheduleHashRadius();
 }, { passive: false });
 
-/* ---- 双指缩放 ---- */
+/** 找出屏幕坐标附近最近的可选天体（导航/下钻用） */
+function bodyNearScreenPoint(px, py, maxDist) {
+  var best = null, bestD = maxDist;
+  for (var i = 0; i < pickables.length; i++) {
+    var it = pickables[i];
+    if (!it.visible || it.id === 'solar-system') continue;
+    var d = Math.hypot(it.sx - px, it.sy - py);
+    if (d < bestD) { bestD = d; best = it; }
+  }
+  if (!best) return null;
+  if (best.id === 'sun') return { spec: SUN };
+  return findBodyById(best.id);
+}
+
+/* ---- 双指缩放 + 双指平移 ---- */
 canvas.addEventListener('touchstart', function (e) {
   if (e.touches.length === 2) {
     drag.active = false;
@@ -1956,6 +2230,8 @@ canvas.addEventListener('touchstart', function (e) {
       e.touches[0].clientX - e.touches[1].clientX,
       e.touches[0].clientY - e.touches[1].clientY
     );
+    pinch.cx = (e.touches[0].clientX + e.touches[1].clientX) * 0.5;
+    pinch.cy = (e.touches[0].clientY + e.touches[1].clientY) * 0.5;
   }
 }, { passive: true });
 
@@ -1965,10 +2241,20 @@ canvas.addEventListener('touchmove', function (e) {
     e.touches[0].clientX - e.touches[1].clientX,
     e.touches[0].clientY - e.touches[1].clientY
   );
+  var cx = (e.touches[0].clientX + e.touches[1].clientX) * 0.5;
+  var cy = (e.touches[0].clientY + e.touches[1].clientY) * 0.5;
+
   if (pinch.dist > 0) {
     cam.tRadius = clamp(cam.tRadius * (pinch.dist / d), cam.minR, cam.maxR);
   }
+  // 双指整体移动 = 平移
+  if (Math.abs(cx - pinch.cx) + Math.abs(cy - pinch.cy) > 0.5) {
+    panCamera(cx - pinch.cx, cy - pinch.cy);
+  }
+
   pinch.dist = d;
+  pinch.cx = cx;
+  pinch.cy = cy;
   e.preventDefault();
 }, { passive: false });
 
@@ -2209,6 +2495,15 @@ function showInfo(d) {
   document.getElementById('infoEn').textContent = d.en.toUpperCase();
   document.getElementById('desc').textContent = d.desc;
 
+  var hw = document.getElementById('histWrap');
+  if (d.history) {
+    hw.classList.remove('hide');
+    document.getElementById('histText').textContent = d.history;
+    document.getElementById('histText').scrollTop = 0;
+  } else {
+    hw.classList.add('hide');
+  }
+
   var rows = [
     ['直径', fmtInt(d.diameter) + ' km'],
     ['公转周期', fmtOrbit(d.orbitDays)],
@@ -2243,6 +2538,14 @@ function findBodyById(id) {
     if (solarBodies[i].spec.id === id) return solarBodies[i];
   }
   return null;
+}
+
+/** 从银河层带着「要看的行星」进来时，落地后再聚焦 */
+function flushPendingBody() {
+  if (!pendingBodyId) return;
+  var id = pendingBodyId;
+  pendingBodyId = null;
+  later(function () { focusBody(id); }, 40);
 }
 
 function enterSolar() {
@@ -2288,7 +2591,52 @@ function enterSolar() {
     cam.enabled = true;
     barEl.classList.remove('off');
     setUIMode('solar');
+    syncHash('solar');
+    flushPendingBody();
   }, 720 + CFG.tween.layer * 0.76 + 90);
+}
+
+/**
+ * 从银河层一路放大时的无缝下钻。
+ * 不走黑场遮罩：银河层淡出、太阳系层同时淡入，看起来像钻进了猎户臂。
+ */
+function diveToSolar() {
+  if (state !== ST.GALAXY) return;
+
+  state = ST.TRANS;
+  cam.enabled = false;
+  barEl.classList.add('off');
+  hideInfo();
+  showToast('正在接近猎户臂', 1100);
+
+  layerTarget.galaxy = 0;
+  layerTarget.solar = 1;
+
+  cam.minR = CFG.solar.minR;
+  cam.maxR = CFG.solar.maxR;
+  cam.theta = cam.tTheta = CFG.solar.camTheta;
+  cam.phi = cam.tPhi = CFG.solar.camPhi;
+  cam.radius = cam.tRadius = CFG.solar.camRadius * 2.2;
+  cam.target[0] = cam.target[1] = cam.target[2] = 0;
+  cam.tTarget[0] = cam.tTarget[1] = cam.tTarget[2] = 0;
+  computeEye();
+
+  tweenCam({
+    theta: clampTheta(CFG.solar.camTheta),
+    phi: CFG.solar.camPhi,
+    radius: CFG.solar.camRadius,
+    target: [0, 0, 0]
+  }, 1500, easeOutCubic);
+
+  camTweenDone.push(function () {
+    state = ST.SOLAR;
+    cam.enabled = true;
+    barEl.classList.remove('off');
+    setUIMode('solar');
+    showToast('已抵达太阳系', 700);
+    syncHash('solar');
+    flushPendingBody();
+  });
 }
 
 function returnToGalaxy() {
@@ -2300,6 +2648,8 @@ function returnToGalaxy() {
   barEl.classList.add('off');
   hideInfo();
   focusedId = null;
+  pendingBodyId = null;
+  syncHash('');
   for (var i = 0; i < solarBodies.length; i++) solarBodies[i].highlight = false;
 
   veilEl.style.opacity = '1';
@@ -2335,6 +2685,7 @@ function returnToGalaxy() {
     cam.enabled = true;
     barEl.classList.remove('off');
     setUIMode('galaxy');
+    syncHash('');
   }, 720 + CFG.tween.layer * 0.76 + 90);
 }
 
@@ -2359,10 +2710,10 @@ function tweenToBody(worldPos, viewRadius) {
   };
 }
 
-function focusBody(id) {
-  if (state === ST.TRANS) return;
+function focusBody(id, mult, force) {
+  if (state === ST.TRANS && !force) return;
 
-  if (id === 'sun') { focusSun(); return; }
+  if (id === 'sun') { focusSun(mult, force); return; }
 
   var body = findBodyById(id);
   if (!body) return;
@@ -2371,7 +2722,7 @@ function focusBody(id) {
   state = ST.TRANS;
   cam.enabled = false;
 
-  var dist = body.mesh.radius * 6.5 + 4;
+  var dist = body.mesh.radius * (mult || 6.5) + 4;
   cam.minR = Math.max(1, body.mesh.radius * 1.6);
   cam.maxR = Math.max(CFG.solar.maxR, dist * 12);
 
@@ -2384,22 +2735,23 @@ function focusBody(id) {
     cam.enabled = true;
   });
 
-  showInfo(body.spec);
+  if (!demoMode) showInfo(body.spec);
   markActive(id);
+  syncHash('body/' + id);
 
   for (var j = 0; j < solarBodies.length; j++) {
     solarBodies[j].highlight = (solarBodies[j] === body);
   }
 }
 
-function focusSun() {
-  if (state === ST.TRANS) return;
+function focusSun(mult, force) {
+  if (state === ST.TRANS && !force) return;
 
   focusedId = 'sun';
   state = ST.TRANS;
   cam.enabled = false;
 
-  var r = CFG.solar.sunRadius * 5.2 + 8;
+  var r = CFG.solar.sunRadius * (mult || 5.2) + 8;
   cam.minR = Math.max(1, CFG.solar.sunRadius * 1.6);
   cam.maxR = Math.max(CFG.solar.maxR, r * 12);
 
@@ -2410,12 +2762,29 @@ function focusSun() {
     cam.enabled = true;
   });
 
-  showInfo(SUN);
+  if (!demoMode) showInfo(SUN);
   markActive('sun');
+  syncHash('body/sun');
   for (var j = 0; j < solarBodies.length; j++) solarBodies[j].highlight = false;
 }
 
 function resetView() {
+  if (state === ST.TRANS) return;
+
+  // 银河层：回到默认俯视角度与距离
+  if (state === ST.GALAXY) {
+    cam.minR = CFG.galaxy.minR;
+    cam.maxR = CFG.galaxy.maxR;
+    tweenCam({
+      theta: clampTheta(CFG.galaxy.camTheta),
+      phi: CFG.galaxy.camPhi,
+      radius: CFG.galaxy.camRadius,
+      target: [0, 0, 0]
+    }, 700, easeInOutCubic);
+    syncHash('');
+    return;
+  }
+
   if (state !== ST.SOLAR && state !== ST.FOCUS) return;
 
   focusedId = null;
@@ -2439,6 +2808,7 @@ function resetView() {
 
   hideInfo();
   markActive(null);
+  syncHash('solar');
   for (var j = 0; j < solarBodies.length; j++) solarBodies[j].highlight = false;
 }
 
@@ -2523,19 +2893,128 @@ function pickAt(px, py) {
   return best;
 }
 
-/* 点击判定：按下与抬起之间位移很小才算点击 */
+/** 屏幕坐标 → 银盘平面（y = 0）上的世界坐标；打偏或射线背离时返回 null */
+function galaxyPointAt(px, py) {
+  camBasis();
+  var t = Math.tan(CFG.camera.fov * 0.5);
+  var aspect = screenW / Math.max(1, screenH);
+  var nx = (px / screenW) * 2 - 1;
+  var ny = 1 - (py / screenH) * 2;
+  var f = camBasis._f, r = camBasis._r, u = camBasis._u;
+
+  var d = [0, 0, 0];
+  for (var i = 0; i < 3; i++) d[i] = f[i] + r[i] * nx * t * aspect + u[i] * ny * t;
+  var dl = Math.hypot(d[0], d[1], d[2]) || 1;
+  d[0] /= dl; d[1] /= dl; d[2] /= dl;
+
+  if (Math.abs(d[1]) < 1e-4) return null;
+  var s = -cam.eye[1] / d[1];
+  if (s <= 0) return null;
+
+  var p = [cam.eye[0] + d[0] * s, 0, cam.eye[2] + d[2] * s];
+  if (Math.hypot(p[0], p[2]) > CFG.galaxy.radius * 1.15) return null;
+  return p;
+}
+
+/** 朝某个银盘坐标推进一级；收到底就自动下钻进太阳系 */
+function zoomToward(point, factor) {
+  if (state !== ST.GALAXY) return;
+
+  var next = Math.max(CFG.galaxy.minR * 0.9, cam.radius * (factor || 0.45));
+  var dive = next <= CFG.galaxy.diveR;
+
+  tweenCam({
+    theta: cam.theta,
+    phi: cam.phi,
+    radius: next,
+    target: point.slice()
+  }, 900, easeInOutCubic);
+
+  if (dive) camTweenDone.push(function () { diveToSolar(); });
+  else showToast('再次点击可继续放大', 900);
+}
+
+/* 点击判定：按下与抬起之间位移很小才算点击；280ms 内的第二次为双击 */
+var lastTap = { time: 0, x: 0, y: 0 };
+var DOUBLE_GAP = 280;
+var DOUBLE_SLOP = 8;
+
+function handleDoubleClick(px, py) {
+  if (state === ST.TRANS &&
+      (focusedId === null || !camTween.active)) return;
+
+  var hit = pickAt(px, py);
+
+  if (hit) {
+    if (hit.id === 'solar-system') { enterSolar(); return; }
+
+    // 第一次单击通常已经把镜头拉过去了，双击再贴近到视觉半径的 3.2 倍
+    if (state === ST.SOLAR || state === ST.FOCUS ||
+        (state === ST.TRANS && focusedId === hit.id)) {
+      focusBody(hit.id, 3.2, true);
+      return;
+    }
+
+    if (state === ST.GALAXY) {
+      zoomToward(galaxyPointAt(px, py) || SUN_MARKER_WORLD, 0.40);
+      return;
+    }
+  }
+
+  if (state === ST.GALAXY) {
+    var p = galaxyPointAt(px, py);
+    if (p) zoomToward(p, 0.40);
+    return;
+  }
+
+  if (state === ST.SOLAR) {
+    cam.tRadius = clamp(cam.tRadius * 0.80, cam.minR, cam.maxR);
+    scheduleHashRadius();
+  }
+}
+
 canvas.addEventListener('pointerup', function (e) {
   if (e.button !== undefined && e.button !== 0) return;
   if (drag.moved > 8) return;
 
   var rect = canvas.getBoundingClientRect();
-  var hit = pickAt(e.clientX - rect.left, e.clientY - rect.top);
-  if (!hit) return;
+  var px = e.clientX - rect.left;
+  var py = e.clientY - rect.top;
 
-  if (hit.id === 'solar-system') {
-    enterSolar();
-  } else if (state === ST.SOLAR || state === ST.FOCUS) {
-    focusBody(hit.id);
+  var now = (window.performance && performance.now) ? performance.now() : Date.now();
+  if (now - lastTap.time < DOUBLE_GAP &&
+      Math.abs(px - lastTap.x) < DOUBLE_SLOP &&
+      Math.abs(py - lastTap.y) < DOUBLE_SLOP) {
+    lastTap.time = 0;
+    handleDoubleClick(px, py);
+    return;
+  }
+  lastTap.time = now;
+  lastTap.x = px;
+  lastTap.y = py;
+
+  if (!cam.enabled) return;
+
+  var hit = pickAt(px, py);
+
+  if (hit) {
+    if (hit.id === 'solar-system') { enterSolar(); return; }
+    if (state === ST.SOLAR || state === ST.FOCUS) { focusBody(hit.id); return; }
+    if (state === ST.GALAXY) { zoomToward(galaxyPointAt(px, py) || SUN_MARKER_WORLD); return; }
+    return;
+  }
+
+  // 银河层：点空白处朝该点推进
+  if (state === ST.GALAXY) {
+    var p = galaxyPointAt(px, py);
+    if (p) zoomToward(p);
+    return;
+  }
+
+  // 太阳系层：点空白处轻微推近
+  if (state === ST.SOLAR) {
+    cam.tRadius = clamp(cam.tRadius * 0.82, cam.minR, cam.maxR);
+    scheduleHashRadius();
   }
 });
 
@@ -2706,19 +3185,271 @@ document.getElementById('collapse').addEventListener('click', function () {
   document.getElementById('collapse').textContent = collapsed ? '+' : '−';
 });
 
+/* ---- 帮助面板 ---- */
+var helpEl = document.getElementById('help');
+var helpOpen = false;
+
+function setHelp(on) {
+  helpOpen = !!on;
+  helpEl.classList.toggle('show', helpOpen);
+}
+function toggleHelp() { setHelp(!helpOpen); }
+
+document.getElementById('btnHelp').addEventListener('click', toggleHelp);
+document.getElementById('closeHelp').addEventListener('click', function () { setHelp(false); });
+
+/* ---- 演示模式：隐藏全部界面，只留三维场景 ---- */
+var demoMode = false;
+var demoHintEl = document.getElementById('demoHint');
+var demoHintTimer = null;
+
+function setDemo(on) {
+  demoMode = !!on;
+  document.body.classList.toggle('demo', demoMode);
+
+  if (demoMode) {
+    setHelp(false);
+    showToast('演示模式', 900);
+    demoHintEl.classList.add('show');
+    if (demoHintTimer) clearTimeout(demoHintTimer);
+    demoHintTimer = setTimeout(function () {
+      demoHintEl.classList.remove('show');
+      demoHintTimer = null;
+    }, 3000);
+  } else {
+    demoHintEl.classList.remove('show');
+    if (demoHintTimer) { clearTimeout(demoHintTimer); demoHintTimer = null; }
+  }
+}
+function toggleDemo() { setDemo(!demoMode); }
+
+/* ---- 截图：在绘制完成的同一帧里取图，不需要 preserveDrawingBuffer ---- */
+var captureNext = false;
+
+document.getElementById('btnShot').addEventListener('click', function () {
+  captureNext = true;
+  showToast('正在生成截图…', 700);
+});
+
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+function saveScreenshot() {
+  var d = new Date();
+  var name = 'milkyway-' +
+    d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '-' +
+    pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds()) + '.png';
+
+  try {
+    canvas.toBlob(function (blob) {
+      if (!blob) { showToast('截图失败', 1400); return; }
+
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+      showToast('已保存 ' + name, 1600);
+    }, 'image/png');
+  } catch (err) {
+    showToast('截图失败：' + err.message, 2000);
+  }
+}
+
+/* ---- 键盘：连续按键状态 + 单次动作 ---- */
+var keys = Object.create(null);
+var PAN_SPEED = 520;   // 像素 / 秒
+
+/** 每帧把按住的方向键换算成屏幕像素位移，交给 1:1 跟手的 panCamera */
+function updateKeyPan(dt) {
+  if (helpOpen) return;
+  if (state !== ST.GALAXY && state !== ST.SOLAR) return;
+
+  var dx = 0, dy = 0;
+  if (keys.ArrowLeft  || keys.KeyA) dx += PAN_SPEED * dt;
+  if (keys.ArrowRight || keys.KeyD) dx -= PAN_SPEED * dt;
+  if (keys.ArrowUp    || keys.KeyW) dy += PAN_SPEED * dt;
+  if (keys.ArrowDown  || keys.KeyS) dy -= PAN_SPEED * dt;
+  if (dx === 0 && dy === 0) return;
+
+  panCamera(dx, dy);
+}
+
+function zoomStep(factor) {
+  if (state === ST.TRANS) return;
+  cam.tRadius = clamp(cam.tRadius * factor, cam.minR, cam.maxR);
+
+  if (state === ST.GALAXY && cam.tRadius <= CFG.galaxy.diveR) {
+    diveToSolar();
+    return;
+  }
+  if (state === ST.SOLAR && cam.tRadius <= CFG.solar.diveR) {
+    var b = bodyNearScreenPoint(screenW * 0.5, screenH * 0.5, 110);
+    if (b) focusBody(b.spec.id);
+  }
+  scheduleHashRadius();
+}
+
+/** 0 = 太阳，1–8 = 八大行星；银河层会先进入太阳系再聚焦 */
+function gotoBody(n) {
+  if (state === ST.TRANS) return;
+
+  var id = n === 0 ? 'sun' : (PLANETS[n - 1] ? PLANETS[n - 1].id : null);
+  if (!id) return;
+
+  if (state === ST.GALAXY) {
+    pendingBodyId = id;
+    enterSolar();
+    return;
+  }
+  focusBody(id);
+}
+
+function nearestPickable(px, py, maxD) {
+  var best = null, bestD = maxD;
+  for (var i = 0; i < pickables.length; i++) {
+    var it = pickables[i];
+    if (!it.visible) continue;
+    var d = Math.hypot(it.sx - px, it.sy - py);
+    if (d < bestD) { bestD = d; best = it; }
+  }
+  return best;
+}
+
+/** 聚焦画面中心附近最近的天体；银河层里对应当前屏幕中心的推进目标 */
+function focusNearest() {
+  if (state === ST.TRANS) return;
+
+  var cx = screenW * 0.5, cy = screenH * 0.5;
+
+  if (state === ST.GALAXY) {
+    var it = nearestPickable(cx, cy, 160);
+    if (it && it.id === 'solar-system') { enterSolar(); return; }
+    var p = galaxyPointAt(cx, cy);
+    if (p) zoomToward(p);
+    return;
+  }
+
+  var b = bodyNearScreenPoint(cx, cy, 160);
+  if (b) focusBody(b.spec.id);
+}
+
+var PAN_KEYS = {
+  ArrowLeft: 1, ArrowRight: 1, ArrowUp: 1, ArrowDown: 1,
+  KeyA: 1, KeyD: 1, KeyW: 1, KeyS: 1
+};
+
 window.addEventListener('keydown', function (e) {
-  if (e.code === 'Escape') {
-    if (state === ST.FOCUS) resetView();
+  // 有 Ctrl / Cmd / Alt 时一律让给浏览器（复制、刷新、切换标签等）
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  var code = e.code;
+
+  // 按住类按键：只记录状态，位移在帧循环里按 dt 积分
+  if (PAN_KEYS[code]) {
+    keys[code] = true;
+    e.preventDefault();
+    return;
+  }
+
+  if (e.repeat) return;
+
+  if (code === 'Escape') {
+    if (helpOpen) setHelp(false);
+    else if (demoMode) setDemo(false);
+    else if (state === ST.FOCUS) resetView();
     else if (state === ST.SOLAR) returnToGalaxy();
-  } else if (e.code === 'Space') {
+    else if (infoEl.classList.contains('show')) hideInfo();
+  } else if (code === 'Space') {
     e.preventDefault();
     togglePause();
+  } else if (e.key === '?' || e.key === '/') {
+    e.preventDefault();
+    toggleHelp();
   } else if (e.key === '+' || e.key === '=') {
-    setSpeed(timeScale >= 100 ? 100 : (timeScale >= 10 ? 100 : 10));
+    zoomStep(0.85);
   } else if (e.key === '-' || e.key === '_') {
+    zoomStep(1.18);
+  } else if (e.key === '[') {
     setSpeed(timeScale <= 1 ? 1 : (timeScale <= 10 ? 1 : 10));
+  } else if (e.key === ']') {
+    setSpeed(timeScale >= 100 ? 100 : (timeScale >= 10 ? 100 : 10));
+  } else if (code === 'KeyR') {
+    resetView();
+  } else if (code === 'KeyH') {
+    toggleDemo();
+  } else if (code === 'KeyF') {
+    focusNearest();
+  } else if (e.key.length === 1 && e.key >= '0' && e.key <= '8') {
+    gotoBody(Number(e.key));
   }
 });
+
+window.addEventListener('keyup', function (e) {
+  if (PAN_KEYS[e.code]) {
+    keys[e.code] = false;
+    e.preventDefault();
+  }
+});
+
+// 切走窗口时清空按键，避免回来还在往一个方向平移
+window.addEventListener('blur', function () {
+  for (var k in keys) keys[k] = false;
+});
+
+/* ---- 深链接 ----
+   #solar       进入太阳系
+   #body/<id>   聚焦某个天体（sun / mercury …）
+   #galaxy/rN   银河层相机半径 N
+   非法 id 静默忽略；写入用 replaceState，不产生历史记录。 */
+var pendingBodyId = null;
+var hashRadiusTimer = null;
+
+function syncHash(h) {
+  try {
+    history.replaceState(null, '',
+      location.pathname + location.search + (h ? '#' + h : ''));
+  } catch (err) { /* file:// 下个别浏览器会拒绝，忽略即可 */ }
+}
+
+function scheduleHashRadius() {
+  if (state !== ST.GALAXY) return;
+  if (hashRadiusTimer) clearTimeout(hashRadiusTimer);
+  hashRadiusTimer = setTimeout(function () {
+    hashRadiusTimer = null;
+    if (state === ST.GALAXY) syncHash('galaxy/r' + Math.round(cam.tRadius));
+  }, 420);
+}
+
+function parseHash() {
+  var h = String(location.hash || '').replace(/^#/, '');
+  if (!h) return;
+
+  if (h === 'solar') {
+    if (state === ST.GALAXY) enterSolar();
+    return;
+  }
+
+  var m = /^body\/([A-Za-z0-9_-]+)$/.exec(h);
+  if (m) {
+    var id = m[1];
+    if (id !== 'sun' && !findBodyById(id)) return;   // 非法 id 静默忽略
+    if (state === ST.GALAXY) { pendingBodyId = id; enterSolar(); }
+    else if (state === ST.SOLAR || state === ST.FOCUS) focusBody(id);
+    return;
+  }
+
+  m = /^galaxy\/r(\d+(?:\.\d+)?)$/.exec(h);
+  if (m) {
+    var r = parseFloat(m[1]);
+    if (!isFinite(r) || state !== ST.GALAXY) return;
+    cam.tRadius = clamp(r, cam.minR, cam.maxR);
+  }
+}
+
+window.addEventListener('hashchange', parseHash);
 
 /* ==========================================================================
  *  19.  渲染
@@ -2730,13 +3461,66 @@ var viewMat = M4.create();
 var dpr = 1;
 var pixelRatioUniform = 1;
 
+/* ---- 自适应画质 ----
+   启动后跳过预热帧，采样 120 帧求平均帧时间；只降不升，避免来回抖动。 */
+var quality = {
+  level: 'high',   // high | mid | low
+  ratio: 1,        // 银河粒子与暗尘的抽样比例
+  dprCap: 2,       // devicePixelRatio 上限
+  dust: true,      // 是否绘制暗尘带
+  clusters: true,  // 是否绘制星团光晕
+  bgRatio: 1       // 背景星抽样比例
+};
+
+function setQuality(level) {
+  if (quality.level === level) return;
+  quality.level = level;
+
+  if (level === 'low') {
+    quality.dprCap = 1; quality.ratio = 0.35;
+    quality.dust = false; quality.clusters = false; quality.bgRatio = 0.5;
+  } else if (level === 'mid') {
+    quality.dprCap = 1.25; quality.ratio = 0.6;
+    quality.dust = false; quality.clusters = true; quality.bgRatio = 1;
+  } else {
+    quality.dprCap = 2; quality.ratio = 1;
+    quality.dust = true; quality.clusters = true; quality.bgRatio = 1;
+  }
+  resize();
+}
+
+var perf = { skip: 90, n: 0, acc: 0, done: false };
+
+function watchPerf(dt) {
+  if (perf.done || !bootHidden) return;
+  if (perf.skip > 0) { perf.skip--; return; }
+
+  perf.acc += dt;
+  perf.n++;
+  if (perf.n < 120) return;
+
+  perf.done = true;
+  var avg = perf.acc / perf.n;
+  if (avg > 1 / 20) setQuality('low');
+  else if (avg > 1 / 32) setQuality('mid');
+}
+
+/* ?quality=high|mid|low 可强制指定画质，便于截图对比与低配机器复现 */
+function applyQualityOverride() {
+  var m = /[?&]quality=(high|mid|low)\b/.exec(location.search);
+  if (!m) return;
+  quality.level = '';
+  setQuality(m[1]);
+  perf.done = true;
+}
+
 var UP_Y = [0, 1, 0];
 var UP_Z = [0, 0, 1];
 
 function resize() {
   screenW = window.innerWidth;
   screenH = window.innerHeight;
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  dpr = Math.min(window.devicePixelRatio || 1, quality.dprCap);
   pixelRatioUniform = dpr;
 
   canvas.width  = Math.max(1, Math.floor(screenW * dpr));
@@ -2769,7 +3553,8 @@ function drawBackgroundStars(time) {
   bindAttrib(P, 'aSize',  bgBuffers.siz, 1);
   bindAttrib(P, 'aSeed',  bgBuffers.sed, 1);
 
-  gl.drawArrays(gl.POINTS, 0, bgData.count);
+  gl.drawArrays(gl.POINTS, 0,
+    Math.max(1, Math.floor(bgData.count * quality.bgRatio)));
 }
 
 /* ---- 19.2 银河层 ---- */
@@ -2818,10 +3603,11 @@ function drawGalaxyLayer(time) {
   bindAttrib(P, 'aSize',  galaxyBuffers.siz, 1);
   bindAttrib(P, 'aSeed',  galaxyBuffers.sed, 1);
 
-  gl.drawArrays(gl.POINTS, 0, galaxyData.count);
+  gl.drawArrays(gl.POINTS, 0,
+    Math.max(1, Math.floor(galaxyData.count * quality.ratio)));
 
   /* ---- 暗尘带：反向减法，只减不增 ---- */
-  if (dustBuffers) {
+  if (dustBuffers && quality.dust) {
     gl.blendEquation(gl.FUNC_REVERSE_SUBTRACT);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
     gl.uniform1f(P.uniforms.uOpacity, alpha * 0.055);
@@ -2831,7 +3617,8 @@ function drawGalaxyLayer(time) {
     bindAttrib(P, 'aSize',  dustBuffers.siz, 1);
     bindAttrib(P, 'aSeed',  dustBuffers.sed, 1);
 
-    gl.drawArrays(gl.POINTS, 0, dustData.count);
+    gl.drawArrays(gl.POINTS, 0,
+      Math.max(1, Math.floor(dustData.count * quality.ratio)));
 
     gl.blendEquation(gl.FUNC_ADD);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
@@ -2856,7 +3643,7 @@ function drawGalaxyLayer(time) {
 
   // 旋臂星团：手动变换，跟随星系自转
   var c = Math.cos(galaxySpin), s = Math.sin(galaxySpin);
-  for (var k = 0; k < CLUSTER_SPECS.length; k++) {
+  if (quality.clusters) for (var k = 0; k < CLUSTER_SPECS.length; k++) {
     var cs = CLUSTER_SPECS[k];
     var wx = cs.pos[0] * c + cs.pos[2] * s;
     var wz = -cs.pos[0] * s + cs.pos[2] * c;
@@ -3155,8 +3942,10 @@ function frame(ts) {
 
   updateGalaxy(dt);
   updateSolar(dt);      // 先更新天体位置，相机补间才能取到最新目标
+  updateKeyPan(dt);
   updateCamera(dt);
   updateLayers(dt);
+  watchPerf(dt);
 
   // 视图矩阵：接近极点时换「上」向量，避免方向翻转
   var up = (cam.phi < 0.12 || cam.phi > Math.PI - 0.12) ? UP_Z : UP_Y;
@@ -3187,9 +3976,16 @@ function frame(ts) {
   updatePickables(viewMat, projMat);
   updateLabels(viewMat, projMat);
 
+  // 截图必须在同一帧绘制完成后立刻取图，否则 WebGL 缓冲区会被清空
+  if (captureNext) {
+    captureNext = false;
+    saveScreenshot();
+  }
+
   if (!bootHidden) {
     bootHidden = true;
     hideBoot();
+    parseHash();
   }
 }
 
@@ -3253,6 +4049,7 @@ function initSceneStep1() {
 }
 
 function start() {
+  applyQualityOverride();
   resize();
   setBootProgress(10);
 
@@ -3260,7 +4057,7 @@ function start() {
   setTimeout(initSceneStep1, 50);
 
   setTimeout(function () {
-    showToast('拖动旋转 · 滚轮缩放 · 点击蓝色脉冲点进入太阳系', 3400);
+    showToast('拖动旋转 · 滚轮缩放 · Shift/右键拖动平移 · 按 ? 查看全部操作', 4000);
   }, 1600);
 }
 
