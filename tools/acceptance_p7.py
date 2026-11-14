@@ -410,13 +410,17 @@ def main():
             ("last", "下弦月", 0.5, False),
         ]
         for key, want_phase, want_frac, want_waxing in cases:
-            e = page.evaluate(
-                "(k) => window.__galaxy.jumpMoonPhase(k)", key)
+            # 同一次调用取月相与按钮，避免自然公转在两次采样间改变相位。
+            snapshot = page.evaluate("""(k) => ({
+              info: window.__galaxy.jumpMoonPhase(k),
+              controls: window.__galaxy.moonControls()
+            })""", key)
+            e = snapshot["info"]
+            m = snapshot["controls"]
             ok = e is not None and e["phase"] == want_phase
             if want_waxing is not None:
                 ok = ok and e["waxing"] is want_waxing
             ok = ok and abs(e["frac"] - want_frac) < 0.02
-            m = controls(page)
             ok = ok and m["phaseButtonsOn"] == [key]
             check("M02 跳到%s：相位、亮比例、按钮高亮一致" % want_phase,
                   ok, (e and (e["phase"], e["frac"], e["waxing"]), m))

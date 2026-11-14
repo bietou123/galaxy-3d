@@ -135,6 +135,23 @@
   .searchResult span { font-size: 12px; overflow-wrap: anywhere; }
   .searchResult small { color: var(--dim); font-size: 10px; overflow-wrap: anywhere; }
   .searchEmpty { margin: 12px 8px; font-size: 12px; color: var(--dim); }
+  #solarControls {
+    display: none; flex: none; flex-direction: column; gap: 4px;
+    padding: 7px 10px; border-bottom: 1px solid var(--line);
+  }
+  body.mode-solar #solarControls { display: flex; }
+  body.mode-solar #sidebar.collapsed #solarControls,
+  body.mode-solar #sidebar.searching #solarControls { display: none; }
+  .solarControlRow { display: flex; min-width: 0; align-items: center; gap: 6px; }
+  #solarViews, #orbitScaleSet {
+    display: flex; flex: 1; min-width: 0; gap: 1px; padding: 2px;
+    background: rgba(0,0,0,.28); border-radius: 7px;
+  }
+  #solarControls .btn { height: 28px; padding: 3px 6px; font-size: 11px; white-space: nowrap; }
+  #solarViews .btn, #orbitScaleSet .btn { flex: 1; min-width: 0; }
+  #solarControls .btn:disabled { opacity: .45; cursor: default; }
+  #orbitScaleLabel { flex: none; font-size: 10px; color: var(--dim); }
+  #btnMoon { flex: none; min-width: 48px; color: var(--accent); border: 1px solid var(--line-hot); }
 
   /* 层级面包屑：本星系群 › 银河系 › 太阳系 › 地月系，点任意一段跳过去。
    * 放在 sidebarHead 外面而不是里面——手机上 sidebarHead 被隐藏，
@@ -674,6 +691,9 @@
     body.info-open #bodyList { display: flex; }
     #info { left: auto; right: 8px; top: 12px; bottom: auto; width: 280px; max-height: calc(100dvh - var(--dock-height, 80px) - var(--bar-height, 44px) - var(--moon-bar-height, 0px) - 36px); }
     body.info-open #moonBadge { right: 300px; }
+    #solarControls { grid-column: 1 / -1; grid-row: 2; flex-direction: row; padding: 3px 8px; }
+    #solarControls .solarControlRow { flex: 1; }
+    body.mode-solar #crumbs { grid-row: 3; }
   }
 
   /* 系统要求减少动态效果：过渡压到接近瞬时，演示巡游不自动播放。
@@ -707,6 +727,22 @@
     <input id="objectSearch" type="search" role="combobox" placeholder="搜索天体" aria-label="搜索天体" autocomplete="off"
            spellcheck="false" aria-autocomplete="list" aria-controls="searchResults" aria-expanded="false">
     <div id="searchResults" role="listbox" aria-label="搜索结果"></div>
+  </div>
+  <div id="solarControls">
+    <div class="solarControlRow">
+      <div id="solarViews" role="group" aria-label="太阳系视图">
+        <button type="button" class="btn" data-solar-view="all" title="太阳系全景">全景</button>
+        <button type="button" class="btn" data-solar-view="inner" title="水星、金星、地球与火星">内行星</button>
+      </div>
+      <button type="button" id="btnMoon" class="btn" title="前往地月系并聚焦月球">月球</button>
+    </div>
+    <div class="solarControlRow">
+      <span id="orbitScaleLabel">轨道间距</span>
+      <div id="orbitScaleSet" role="group" aria-labelledby="orbitScaleLabel">
+        <button type="button" class="btn" data-solar-orbits="real" title="轨道半径按平均日距 AU 同比例绘制，天体尺寸仍放大">真实</button>
+        <button type="button" class="btn" data-solar-orbits="compressed" title="轨道距离使用非线性压缩">示意</button>
+      </div>
+    </div>
   </div>
   <ul id="bodyList"></ul>
   <div id="sideFoot">
@@ -795,7 +831,7 @@
     <div><dt>0 – 8</dt><dd>直达太阳与八大行星</dd></div>
     <div><dt>[ / ]</dt><dd>时间流速 1× / 10× / 100×</dd></div>
     <div><dt>? 或 /</dt><dd>开关本说明</dd></div>
-    <div><dt>比例尺</dt><dd>左下角线条按当前层级换算真实长度；太阳系与恒星系统为示意压缩</dd></div>
+    <div><dt>比例尺</dt><dd>太阳系默认使用真实轨道间距，天体尺寸仍放大；恒星系统为示意压缩</dd></div>
   </dl>
 </div>
 
@@ -989,17 +1025,21 @@ var CFG = {
     topR:      3600
   },
   solar: {
-    auScale:    30,           // 轨道半径 = auScale · AU^auPow
-    auPow:      0.55,
+    auScale:    30,           // 真实档：轨道半径 = auScale · AU
+    auPow:      0.55,         // 示意档与恒星系统使用的压缩指数
     rScale:     1.9,          // 行星半径 = rScale · (d / d地球)^rPow
     rPow:       0.38,
     sunRadius:  5.0,          // 收小一点：8 会让水星轨道几乎贴着太阳表面
     daysPerSec: 30,           // 每现实秒推进的天数
-    camRadius:  360,
+    camRadius:  2400,
+    innerCamRadius: 150,
+    compressedCamRadius: 360,
+    compressedInnerCamRadius: 110,
     camPhi:     1.03,
     camTheta:   Math.PI / 2,
     minR:       18,
-    maxR:       950,
+    maxR:       5500,
+    compressedMaxR: 950,
     diveR:      44            // 放大到这个距离且屏幕中心有行星就自动聚焦
   },
   camera: { fov: 55 * Math.PI / 180, near: 0.5, far: 50000 },
@@ -3006,6 +3046,8 @@ var farData = null;
 var farBuffers = null;
 var sunMesh = null;
 var solarBodies = [];
+var solarOrbitMode = 'real';
+var solarView = 'all';
 var labelItems = [];
 
 var galaxyModel = M4.create();
@@ -3551,11 +3593,64 @@ function makeBodyMesh(texture) {
 }
 
 function orbitRadiusOf(au) {
-  return CFG.solar.auScale * Math.pow(au, CFG.solar.auPow);
+  return CFG.solar.auScale * (solarOrbitMode === 'real' ? au : Math.pow(au, CFG.solar.auPow));
 }
 
 function planetRadiusOf(diameter) {
   return CFG.solar.rScale * Math.pow(diameter / 12742, CFG.solar.rPow);
+}
+
+function solarViewRadius() {
+  var S = CFG.solar;
+  if (solarView === 'inner') return solarOrbitMode === 'real' ? S.innerCamRadius : S.compressedInnerCamRadius;
+  return solarOrbitMode === 'real' ? S.camRadius : S.compressedCamRadius;
+}
+
+function solarMaxRadius() {
+  return solarOrbitMode === 'real' ? CFG.solar.maxR : CFG.solar.compressedMaxR;
+}
+
+function setSolarOrbitMode(mode) {
+  if (mode !== 'real' && mode !== 'compressed') return false;
+  if ((state !== ST.SOLAR && state !== ST.FOCUS) || camTween.active) return false;
+  if (mode === solarOrbitMode) return true;
+  cancelSearchNavigation();
+  var previousR = solarViewRadius();
+  solarOrbitMode = mode;
+  var factor = solarViewRadius() / previousR;
+  solarBodies.forEach(function (body) {
+    body.orbitR = orbitRadiusOf(body.spec.au);
+    body.lineData = buildOrbitLine(body.orbitR, 256, body.orbitTilt);
+    gl.bindBuffer(gl.ARRAY_BUFFER, body.lineBuf);
+    gl.bufferData(gl.ARRAY_BUFFER, body.lineData, gl.STATIC_DRAW);
+  });
+  updateSolar(0);
+  cam.maxR = solarMaxRadius();
+  if (state === ST.SOLAR) {
+    cam.radius = clamp(cam.radius * factor, cam.minR, cam.maxR);
+    cam.tRadius = clamp(cam.tRadius * factor, cam.minR, cam.maxR);
+    for (var i = 0; i < 3; i++) {
+      cam.target[i] *= factor;
+      cam.tTarget[i] *= factor;
+    }
+    clampTarget();
+  }
+  computeEye();
+  sceneFrameDirty = true;
+  scaleTextAt = -1e9;
+  renderLegend('solar');
+  updateSolarControls();
+  return true;
+}
+
+function setSolarView(view) {
+  if (view !== 'all' && view !== 'inner') return false;
+  if ((state !== ST.SOLAR && state !== ST.FOCUS) || camTween.active) return false;
+  cancelSearchNavigation();
+  solarView = view;
+  resetView();
+  updateSolarControls();
+  return true;
 }
 
 function buildSolarSystem() {
@@ -3625,6 +3720,7 @@ function buildSolarSystem() {
       orbitTilt: p.orbitTilt || 0,
       angle: rand() * Math.PI * 2,
       lineBuf: lineBuf,
+      lineData: lineVerts,
       lineCount: 257,
       ring: ring,
       angSpeed: (Math.PI * 2) / (p.orbitDays / CFG.solar.daysPerSec),
@@ -3980,7 +4076,8 @@ function clampTarget() {
   else if (state === ST.GROUP) lim = panLimit.localgroup;
   else if (state === ST.STAR) lim = panLimit.star;
   else if (state === ST.EARTHMOON) lim = panLimit.earthmoon;
-  else if (state === ST.SOLAR) lim = panLimit.solar;
+  else if (state === ST.SOLAR) lim = panLimit.solar *
+    (solarOrbitMode === 'real' ? CFG.solar.camRadius / CFG.solar.compressedCamRadius : 1);
   else return;
   var m = Math.hypot(cam.tTarget[0], cam.tTarget[2]);
   if (m > lim) {
@@ -4593,6 +4690,7 @@ function setUIMode(mode) {
          : 'MILKY WAY';
   document.getElementById('brandZh').textContent = zh;
   document.getElementById('brandEn').textContent = en;
+  document.title = zh + ' · 3D 交互模型';
 
   /* 返回按钮说明的是「退到哪一层」，不是固定回银河 */
   backBtn.textContent = mode === 'earthmoon' ? '← 返回太阳系'
@@ -4601,11 +4699,36 @@ function setUIMode(mode) {
   backBtn.title = backBtn.textContent.replace('← ', '');
   /* 地月系工具栏、全局倍速条的显隐都挂在这一个类上，CSS 里集中处理 */
   document.body.classList.toggle('mode-earthmoon', mode === 'earthmoon');
+  document.body.classList.toggle('mode-solar', mode === 'solar');
   renderList(mode);
   renderLegend(mode);
   renderCrumbs();
   updateMoonBar();
   updateQualityButtons();
+  updateSolarControls();
+}
+
+var solarControlButtons = document.querySelectorAll('#solarControls button');
+function updateSolarControls() {
+  if (!solarControlButtons) return;
+  var busy = (state !== ST.SOLAR && state !== ST.FOCUS) || camTween.active;
+  for (var i = 0; i < solarControlButtons.length; i++) {
+    var button = solarControlButtons[i];
+    if (button.id === 'btnMoon') continue;
+    var selected = button.dataset.solarOrbits
+      ? button.dataset.solarOrbits === solarOrbitMode
+      : button.dataset.solarView === solarView && !focusedId;
+    button.classList.toggle('on', selected);
+    if (button.getAttribute('aria-pressed') !== String(selected)) button.setAttribute('aria-pressed', String(selected));
+    if (button.disabled !== busy) button.disabled = busy;
+  }
+}
+for (var sci = 0; sci < solarControlButtons.length; sci++) {
+  solarControlButtons[sci].addEventListener('click', function () {
+    if (this.id === 'btnMoon') goToEarthMoon('moon');
+    else if (this.dataset.solarOrbits) setSolarOrbitMode(this.dataset.solarOrbits);
+    else setSolarView(this.dataset.solarView);
+  });
 }
 
 /* ---- 3.10 UI：面包屑、显示开关、画质按钮 ----
@@ -4817,6 +4940,7 @@ function fmtRotation(hours, retro) {
 }
 
 function showInfo(d) {
+  document.title = d.zh + ' · ' + document.getElementById('brandZh').textContent + ' · 3D 交互模型';
   document.getElementById('hero').style.background =
     'radial-gradient(circle at 32% 22%,' + rgbaStr(d.color, 0.88) + ',' +
     rgbaStr(d.color, 0.16) + ' 55%, rgba(9,15,27,0) 100%)';
@@ -4880,6 +5004,7 @@ function hideInfo() {
   infoEl.classList.remove('show');
   document.body.classList.remove('info-open');
   sceneFrameDirty = true;
+  document.title = document.getElementById('brandZh').textContent + ' · 3D 交互模型';
 }
 
 /* ==========================================================================
@@ -4910,27 +5035,6 @@ function findGalaxyById(id) {
 
 /** 从银河层带着「要看的行星」进来时，落地后再聚焦 */
 function flushPendingBody() {
-  /* #earthmoon 的冷启动要走两步：先进太阳系，再聚焦地球，最后钻进地月系。
-   * 直接播地月系的转场会让相机从银河坐标瞬移到大球外面。 */
-  if (pendingEarthMoon) {
-    pendingEarthMoon = false;
-    pendingBodyId = null;
-    later(function () {
-      if (state !== ST.SOLAR || navWant || searchDestination) return;
-      focusBody('earth');
-      /* 不能按 CFG.tween.focus 写死延时再进地月系：补间是按帧 dt 推进的，
-       * 低帧率下 1200ms 的补间会拖得更久，enterEarthMoon 会因 state 仍是
-       * TRANS 直接早退。挂在补间完成回调上，等真正落到 FOCUS 再进。 */
-      if (state === ST.TRANS) {
-        camTweenDone.push(function () {
-          later(function () {
-            if (!navWant && !searchDestination) enterEarthMoon();
-          }, 60);
-        });
-      }
-    }, 40);
-    return;
-  }
   if (!pendingBodyId) return;
   var id = pendingBodyId;
   pendingBodyId = null;
@@ -4958,11 +5062,11 @@ function enterSolar() {
   // 在遮罩完全遮住画面后直接改写相机参数，避免跳变被看见
   later(function () {
     cam.minR = CFG.solar.minR;
-    cam.maxR = CFG.solar.maxR;
+    cam.maxR = solarMaxRadius();
     cam.fov = CFG.camera.fov;
     cam.theta = cam.tTheta = CFG.solar.camTheta;
     cam.phi = cam.tPhi = CFG.solar.camPhi;
-    cam.radius = cam.tRadius = CFG.solar.camRadius * 1.55;
+    cam.radius = cam.tRadius = solarViewRadius() * 1.55;
     cam.target[0] = cam.target[1] = cam.target[2] = 0;
     cam.tTarget[0] = cam.tTarget[1] = cam.tTarget[2] = 0;
     computeEye();
@@ -4974,7 +5078,7 @@ function enterSolar() {
     tweenCam({
       theta: clampTheta(CFG.solar.camTheta),
       phi: CFG.solar.camPhi,
-      radius: CFG.solar.camRadius,
+      radius: solarViewRadius(),
       target: [0, 0, 0]
     }, CFG.tween.layer * 0.76, easeOutCubic);
   }, 720);
@@ -5007,11 +5111,11 @@ function diveToSolar() {
   layerTarget.solar = 1;
 
   cam.minR = CFG.solar.minR;
-  cam.maxR = CFG.solar.maxR;
+  cam.maxR = solarMaxRadius();
   cam.fov = CFG.camera.fov;
   cam.theta = cam.tTheta = CFG.solar.camTheta;
   cam.phi = cam.tPhi = CFG.solar.camPhi;
-  cam.radius = cam.tRadius = CFG.solar.camRadius * 2.2;
+  cam.radius = cam.tRadius = solarViewRadius() * 2.2;
   cam.target[0] = cam.target[1] = cam.target[2] = 0;
   cam.tTarget[0] = cam.tTarget[1] = cam.tTarget[2] = 0;
   computeEye();
@@ -5019,7 +5123,7 @@ function diveToSolar() {
   tweenCam({
     theta: clampTheta(CFG.solar.camTheta),
     phi: CFG.solar.camPhi,
-    radius: CFG.solar.camRadius,
+    radius: solarViewRadius(),
     target: [0, 0, 0]
   }, 1500, easeOutCubic);
 
@@ -5515,9 +5619,6 @@ function enterEarthMoon() {
     barEl.classList.remove('off');
     setUIMode('earthmoon');
     syncHash('earthmoon');
-    var wantPart = pendingEarthMoonPart;
-    pendingEarthMoonPart = null;
-    if (wantPart) later(function () { focusEarthMoonPart(wantPart); }, 40);
   }, 700 + CFG.tween.layer * 0.80 + 90);
 
   return true;
@@ -5541,8 +5642,8 @@ function exitEarthMoon() {
 
   var memo = earthMoonMemo || {
     theta: CFG.solar.camTheta, phi: CFG.solar.camPhi,
-    radius: CFG.solar.camRadius, target: [0, 0, 0],
-    minR: CFG.solar.minR, maxR: CFG.solar.maxR, fov: CFG.camera.fov
+    radius: solarViewRadius(), target: [0, 0, 0],
+    minR: CFG.solar.minR, maxR: solarMaxRadius(), fov: CFG.camera.fov
   };
   var returnId = earthMoonReturnId;
   earthMoonReturnId = null;
@@ -5554,7 +5655,7 @@ function exitEarthMoon() {
     cam.near = CFG.camera.near;
     cam.theta = cam.tTheta = memo.theta;
     cam.phi = cam.tPhi = memo.phi;
-    cam.radius = cam.tRadius = Math.min(memo.radius * 1.35, CFG.solar.maxR);
+    cam.radius = cam.tRadius = Math.min(memo.radius * 1.35, solarMaxRadius());
     cam.target[0] = cam.tTarget[0] = memo.target[0];
     cam.target[1] = cam.tTarget[1] = memo.target[1];
     cam.target[2] = cam.tTarget[2] = memo.target[2];
@@ -5614,6 +5715,7 @@ function focusSystemBody(w, mult) {
 /** 地月系里聚焦地球或月球。月球在 60 wu 轨道上跑得快，补间要跟随。 */
 function focusEarthMoonPart(id) {
   if (state !== ST.EARTHMOON || !earthMoon) return false;
+  if (id !== 'earth' && id !== 'moon') return false;
 
   var obj = id === 'moon' ? earthMoon.moon : earthMoon.earth;
   var dist = Math.max(obj.mesh.radius * 6.0 + 1.2, 2.4);
@@ -5653,6 +5755,7 @@ function focusEarthMoonPart(id) {
   }
   markActive(id);
   syncHash('earthmoon/' + id);
+  updateMoonBar();
   return true;
 }
 
@@ -5923,7 +6026,7 @@ function focusBody(id, mult, force) {
 
   var dist = body.mesh.radius * (mult || 6.5) + 4;
   cam.minR = Math.max(1, body.mesh.radius * 1.6);
-  cam.maxR = Math.max(CFG.solar.maxR, dist * 12);
+  cam.maxR = Math.max(solarMaxRadius(), dist * 12);
 
   var to = tweenToBody(body.worldPos, dist);
   // followId 让补间期间的终点实时跟随公转中的行星
@@ -5952,7 +6055,7 @@ function focusSun(mult, force) {
 
   var r = CFG.solar.sunRadius * (mult || 5.2) + 8;
   cam.minR = Math.max(1, CFG.solar.sunRadius * 1.6);
-  cam.maxR = Math.max(CFG.solar.maxR, r * 12);
+  cam.maxR = Math.max(solarMaxRadius(), r * 12);
 
   tweenCam(tweenToBody([0, 0, 0], r), CFG.tween.focus, easeInOutCubic);
 
@@ -6059,12 +6162,12 @@ function resetView() {
   cam.enabled = false;
 
   cam.minR = CFG.solar.minR;
-  cam.maxR = CFG.solar.maxR;
+  cam.maxR = solarMaxRadius();
 
   tweenCam({
     theta: clampTheta(CFG.solar.camTheta),
     phi: CFG.solar.camPhi,
-    radius: CFG.solar.camRadius,
+    radius: solarViewRadius(),
     target: [0, 0, 0]
   }, CFG.tween.focus, easeInOutCubic);
 
@@ -6633,7 +6736,7 @@ function updateLabels(viewMat, projMat) {
                  : (state === ST.GROUP ? 'group'
                  : (state === ST.STAR ? 'system'
                  : (state === ST.EARTHMOON ? 'earthmoon' : 'solar')));
-  var placed = (activeKind === 'group') ? labelObstacles() : [];
+  var placed = (activeKind === 'group' || activeKind === 'solar') ? labelObstacles() : [];
   var cand = [];
   var i, item, p;
 
@@ -6659,6 +6762,8 @@ function updateLabels(viewMat, projMat) {
     if (item.kind === 'group' && focusedGalaxyId === item.ref.id) continue;
     if (item.kind === 'system' && focusedSystemBody === item.ref) continue;
     if (item.kind === 'earthmoon' && focusedEarthMoonPart === item.ref.id) continue;
+    if (item.kind === 'solar' && focusedId ===
+        (item.ref === 'sun' ? 'sun' : item.ref.spec.id)) continue;
 
     var wp = worldPosOf(item);
     p = projectToScreen(wp[0], wp[1], wp[2], viewMat, projMat);
@@ -6701,6 +6806,7 @@ function updateLabels(viewMat, projMat) {
 
     var show = true;
     var dy = 0;
+    var labelX = p.x;
     if (activeKind === 'solar' || activeKind === 'group' ||
         activeKind === 'system' || activeKind === 'earthmoon') {
       // 标签是「中心上方两个字 + 一行英文」，外接框按实际渲染尺寸取。
@@ -6708,12 +6814,14 @@ function updateLabels(viewMat, projMat) {
       labelBox(item);
       var w = item._w;
       var h = item._h;
+      if (activeKind === 'solar') labelX = clamp(p.x, sceneFrame.left + w * 0.5, sceneFrame.right - w * 0.5);
       var picked = null;
       for (var oi = 0; oi < LABEL_OFFSETS.length && picked === null; oi++) {
         var oy = LABEL_OFFSETS[oi];
         // transform 是 translate(-50%,-130%)：盒子底边大致落在锚点上
-        var x0 = p.x - w * 0.5, y0 = p.y + oy - h * 1.3;
+        var x0 = labelX - w * 0.5, y0 = p.y + oy - h * 1.3;
         var hit = false;
+        if (activeKind === 'solar' && (y0 < sceneFrame.top || y0 + h > sceneFrame.bottom)) continue;
         for (var q = 0; q < placed.length; q++) {
           var r = placed[q];
           if (x0 < r[2] && x0 + w > r[0] && y0 < r[3] && y0 + h > r[1]) { hit = true; break; }
@@ -6735,9 +6843,10 @@ function updateLabels(viewMat, projMat) {
     var fade = clamp01(1.4 - p.depth /
       (item.kind === 'galaxy' ? 6000
        : (item.kind === 'group' ? 16000
-       : (item.kind === 'star' ? 6000 : 900))));
+       : (item.kind === 'star' ? 6000
+         : (item.kind === 'solar' ? Math.max(900, solarViewRadius() * 2) : 900)))));
     item.el.style.transform =
-      'translate(-50%,-130%) translate(' + p.x.toFixed(1) + 'px,' + (p.y + dy).toFixed(1) + 'px)';
+      'translate(-50%,-130%) translate(' + labelX.toFixed(1) + 'px,' + (p.y + dy).toFixed(1) + 'px)';
     item.el.style.opacity = String(fade * item._a * 0.95);
   }
 
@@ -6897,14 +7006,19 @@ function updateSearchActive() {
 
 function selectSearchResult(item) {
   if (demoMode) setDemo(false);
-  pendingBodyId = pendingGalaxyId = pendingSystemBodyId = pendingEarthMoonPart = null;
-  pendingEarthMoon = false;
+  pendingBodyId = pendingGalaxyId = pendingSystemBodyId = null;
   searchDestination = item;
   navTries = 0;
   navWant = item.kind === 'star' || item.kind === 'world'
     ? (state === ST.STAR && activeStarSystem && activeStarSystem.id === item.systemId ? 'star' : 'galaxy')
     : item.kind;
   objectSearch.value = ''; objectSearch.blur(); renderSearch();
+}
+
+function goToEarthMoon(part) {
+  if (!earthMoon || (part && part !== 'earth' && part !== 'moon')) return false;
+  selectSearchResult({ kind: 'earthmoon', id: part || 'earthmoon' });
+  return true;
 }
 
 function updateSearchNavigation() {
@@ -6924,7 +7038,10 @@ function updateSearchNavigation() {
     searchDestination = null;
     if (item.kind === 'group') focusGalaxy(item.id);
     else if (item.kind === 'galaxy') { resetView(); showGalaxyInfo(findGalaxyById(item.id)); }
-    else if (item.kind === 'earthmoon') focusEarthMoonPart(item.id);
+    else if (item.kind === 'earthmoon') {
+      if (item.id === 'earthmoon') resetView();
+      else focusEarthMoonPart(item.id);
+    }
     else if (item.id === 'solar-system') resetView();
     else focusBody(item.id);
   }
@@ -7040,9 +7157,9 @@ var LEGEND_HTML = {
     '<div><span class="mk" style="background:#7FA8FF"></span>',
     '<span>类地行星与气态巨行星，大小按显示放大绘制</span></div>',
     '<div><span class="mk" style="background:#7A8FB5"></span>',
-    '<span>细线为公转轨道，半径同样经过压缩</span></div>',
+    '<span id="solarOrbitNote">轨道平均半径按真实 AU 间距绘制</span></div>',
     '<div><span class="mk" style="background:#4DD0FF"></span>',
-    '<span>点击任意行星进入聚焦，可继续放大到地月系</span></div>'
+    '<span>月球是地球的天然卫星，半径约为地球的 0.273 倍</span></div>'
   ].join(''),
   star: [
     '<div><span class="mk" style="background:#FFE6A8;box-shadow:0 0 8px #FFE6A8"></span>',
@@ -7074,6 +7191,10 @@ function renderLegend(mode) {
   if (typeof LEGEND_HTML === 'undefined' || !legendBodyEl) return;
   var html = LEGEND_HTML[mode] || LEGEND_HTML.galaxy;
   if (legendBodyEl.innerHTML !== html) legendBodyEl.innerHTML = html;
+  var orbitNote = document.getElementById('solarOrbitNote');
+  if (mode === 'solar' && orbitNote) orbitNote.textContent = solarOrbitMode === 'real'
+    ? '轨道平均半径按真实 AU 间距绘制；圆轨为近似'
+    : '轨道平均半径按幂函数压缩；圆轨为近似';
 }
 
 document.getElementById('collapse').addEventListener('click', function () {
@@ -7181,8 +7302,8 @@ function toggleDemo() { setDemo(!demoMode); }
  *   银河系   1 wu = 20 光年      （盘面按真实尺度）
  *   本星系群 1 wu = 1000 光年    （成员间距按真实尺度）
  *   地月系   1 wu = 6371 千米    （地球半径，真实比例）
- * 太阳系的轨道半径是 r = 30·AU^0.55 的幂函数压缩、行星半径另有放大，
- * 所以只取 1 AU 附近的局部斜率并在注记里写明「已压缩」。
+ * 太阳系默认 1 wu = 1/30 AU，轨道按真实距离、天体尺寸另有放大。
+ * 示意档使用幂函数压缩，比例尺只在 1 AU 附近有局部意义。
  * 恒星系统的轨道间距完全是示意排布，不显示数值线，避免编造精度。 */
 var scaleEl = document.getElementById('scale');
 var scaleBarEl = document.getElementById('scaleBar');
@@ -7218,9 +7339,10 @@ function scaleSpecFor(mode) {
              note: '真实比例：1 世界单位 = 6,371 千米' };
   }
   if (mode === 'solar') {
-    // r = 30 · AU^0.55 → 1 AU 处 dr/dAU = 30 × 0.55 = 16.5 wu/AU
-    return { unit: 'au', perWu: 1 / 16.5,
-             note: '行星直径已放大 · 轨道距离按幂函数压缩' };
+    if (solarOrbitMode === 'real') return { unit: 'au', perWu: 1 / CFG.solar.auScale,
+      note: '轨道按真实 AU 间距 · 天体尺寸已放大' };
+    return { unit: 'au', perWu: 1 / (CFG.solar.auScale * CFG.solar.auPow),
+      note: '轨道距离已压缩 · 比例尺仅在 1 AU 附近有效' };
   }
   return null;
 }
@@ -7534,10 +7656,6 @@ window.addEventListener('blur', function () {
    非法 id 静默忽略；写入用 replaceState，不产生历史记录。 */
 var pendingBodyId = null;
 var pendingGalaxyId = null;
-/* 地月系只能从太阳系里进：冷启动的 #earthmoon 走「先进太阳系→聚焦地球→
- * 再进地月系」三步，pendingEarthMoon 就是这条链的标记。 */
-var pendingEarthMoon = false;
-var pendingEarthMoonPart = null;
 var hashRadiusTimer = null;
 
 function syncHash(h) {
@@ -7616,9 +7734,7 @@ function parseHash() {
   }
 
   if (h === 'earthmoon') {
-    if (state === ST.GALAXY) { pendingEarthMoon = true; enterSolar(); }
-    else if (state === ST.FOCUS && focusedId === 'earth') enterEarthMoon();
-    else if (state === ST.SOLAR) { focusBody('earth'); }
+    goToEarthMoon(null);
     return;
   }
 
@@ -7626,16 +7742,7 @@ function parseHash() {
   if (m) {
     var part = m[1];
     if (part !== 'earth' && part !== 'moon') return;
-    if (state === ST.GALAXY) {
-      pendingEarthMoon = true;
-      pendingEarthMoonPart = part;
-      enterSolar();
-    } else if (state === ST.FOCUS && focusedId === 'earth') {
-      pendingEarthMoonPart = part;
-      enterEarthMoon();
-    } else if (state === ST.EARTHMOON) {
-      focusEarthMoonPart(part);
-    }
+    goToEarthMoon(part);
     return;
   }
 }
@@ -8232,6 +8339,28 @@ function drawGlow(center, radius, colors, alpha) {
 }
 
 /* ---- 19.4 太阳系层 ---- */
+function drawSolarMarkers(alpha) {
+  var B = progBillboard;
+  gl.useProgram(B.program);
+  gl.uniformMatrix4fv(B.uniforms.uProj, false, projMat);
+  gl.uniformMatrix4fv(B.uniforms.uView, false, viewMat);
+  bindAttrib(B, 'aQuad', quadBuffer, 2);
+  for (var i = 0; i < solarBodies.length; i++) {
+    var b = solarBodies[i];
+    var p = projectToScreen(b.worldPos[0], b.worldPos[1], b.worldPos[2], viewMat, projMat);
+    if (!p) continue;
+    var pixels = b.mesh.radius * p.pxPerUnit;
+    if (pixels >= 2.8) continue;
+    // 小目标只补标记，不移动轨道，也不改变聚焦时的球体半径。
+    var c = hexToRgb(b.spec.color);
+    gl.uniform3f(B.uniforms.uCenter, b.worldPos[0], b.worldPos[1], b.worldPos[2]);
+    gl.uniform1f(B.uniforms.uSize, 6 / p.pxPerUnit);
+    gl.uniform3f(B.uniforms.uColor, c[0], c[1], c[2]);
+    gl.uniform1f(B.uniforms.uOpacity, 0.85 * alpha * clamp01((2.8 - pixels) / 1.6));
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+  }
+}
+
 function drawSolarLayer(alpha) {
   if (alpha < 0.004 || !sunMesh) return;
 
@@ -8275,6 +8404,7 @@ function drawSolarLayer(alpha) {
   // 就会被太阳球体自身的前表面整片剔除，从而完全看不见。
   gl.disable(gl.DEPTH_TEST);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+  drawSolarMarkers(alpha);
   drawGlow(ZERO3, CFG.solar.sunRadius, [
     [1.00, 0.97, 0.88], [1.00, 0.83, 0.52], [1.00, 0.58, 0.24]
   ], alpha);
@@ -8516,37 +8646,30 @@ function updateGalaxy(dt) {
 }
 
 function updateSolar(dt) {
-  if (!paused) {
-    var st = dt * timeScale;
+  var st = paused ? 0 : dt * timeScale;
+  for (var i = 0; i < solarBodies.length; i++) {
+    var b = solarBodies[i];
+    b.angle += st * b.angSpeed;
+    // 100× 速度下卡顿时单帧增量可能超过一整圈，用 while 保证真正归一
+    var TAU = Math.PI * 2;
+    while (b.angle >= TAU) b.angle -= TAU;
+    while (b.angle < 0) b.angle += TAU;
 
-    for (var i = 0; i < solarBodies.length; i++) {
-      var b = solarBodies[i];
+    // 暂停也更新几何：切换轨道间距时，行星不能留在旧轨道上。
+    var ox = Math.cos(b.angle) * b.orbitR;
+    var oz = Math.sin(b.angle) * b.orbitR;
+    b.worldPos[0] = ox;
+    b.worldPos[1] = oz * Math.sin(b.orbitTilt);
+    b.worldPos[2] = oz * Math.cos(b.orbitTilt);
+    b.mesh.worldPos = b.worldPos;
 
-      b.angle += st * b.angSpeed;
-      // 100× 速度下卡顿时单帧增量可能超过一整圈，用 while 保证真正归一
-      var TAU = Math.PI * 2;
-      while (b.angle >= TAU) b.angle -= TAU;
-      while (b.angle < 0) b.angle += TAU;
-
-      var ox = Math.cos(b.angle) * b.orbitR;
-      var oz = Math.sin(b.angle) * b.orbitR;
-      var sinT = Math.sin(b.orbitTilt);
-      var cosT = Math.cos(b.orbitTilt);
-
-      b.worldPos[0] = ox;
-      b.worldPos[1] = oz * sinT;
-      b.worldPos[2] = oz * cosT;
-      b.mesh.worldPos = b.worldPos;
-
-      var dir = b.mesh.retro ? -1 : 1;
-      b.mesh.spin += st * b.mesh.spinSpeed * dir;
-      if (b.mesh.spin > Math.PI * 2) b.mesh.spin -= Math.PI * 2;
-      if (b.mesh.spin < 0) b.mesh.spin += Math.PI * 2;
-    }
-
-    sunMesh.spin += st * sunMesh.spinSpeed;
-    if (sunMesh.spin > Math.PI * 2) sunMesh.spin -= Math.PI * 2;
+    var dir = b.mesh.retro ? -1 : 1;
+    b.mesh.spin += st * b.mesh.spinSpeed * dir;
+    if (b.mesh.spin > Math.PI * 2) b.mesh.spin -= Math.PI * 2;
+    if (b.mesh.spin < 0) b.mesh.spin += Math.PI * 2;
   }
+  sunMesh.spin += st * sunMesh.spinSpeed;
+  if (sunMesh.spin > Math.PI * 2) sunMesh.spin -= Math.PI * 2;
 
   // 补间期间让终点跟随公转中的行星，避免相机飞到旧位置
   if (camTween.active && camTween.followId) {
@@ -8565,9 +8688,7 @@ function updateSolar(dt) {
     } else {
       var target = findBodyById(focusedId);
       if (target) {
-        cam.tTarget[0] = target.worldPos[0];
-        cam.tTarget[1] = target.worldPos[1];
-        cam.tTarget[2] = target.worldPos[2];
+        for (var j = 0; j < 3; j++) cam.target[j] = cam.tTarget[j] = target.worldPos[j];
       }
     }
   }
@@ -8737,9 +8858,8 @@ function updateEarthMoon(dt) {
       camTween.to.target[1] = fp[1];
       camTween.to.target[2] = fp[2];
     } else if (!camTween.active && state === ST.EARTHMOON) {
-      cam.tTarget[0] = fp[0];
-      cam.tTarget[1] = fp[1];
-      cam.tTarget[2] = fp[2];
+      // 聚焦的平移必须跟随目标；阻尼会让 8× 下的月球跑出近景。
+      for (var j = 0; j < 3; j++) cam.target[j] = cam.tTarget[j] = fp[j];
     }
   }
 }
@@ -8788,6 +8908,7 @@ function frame(ts) {
   updateKeyPan(dt);
   updateDemoTour(dt);   // 演示巡游只改相机目标值，必须在 updateCamera 之前
   updateCamera(dt);
+  updateSolarControls();
   updateSceneFrame();
   updateScale(ts);      // 比例尺读的是本帧的相机半径与视场
   updateLayers(dt);
@@ -9022,6 +9143,26 @@ window.__galaxy = {
     if (!body) return null;
     var p = projectToScreen(body.worldPos[0], body.worldPos[1], body.worldPos[2], viewMat, projMat);
     return p ? { id: id, x: p.x, y: p.y, px: body.mesh.radius * p.pxPerUnit } : null;
+  },
+  solarOrbits: function () {
+    return {
+      mode: solarOrbitMode, view: solarView, frame: this.sceneFrame(),
+      bodies: solarBodies.map(function (b) {
+        var bounds = { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity };
+        var visible = true, lineError = 0;
+        for (var i = 0; i < b.lineData.length; i += 3) {
+          var x = b.lineData[i], y = b.lineData[i + 1], z = b.lineData[i + 2];
+          lineError = Math.max(lineError, Math.abs(Math.hypot(x, y, z) - b.orbitR));
+          var p = projectToScreen(x, y, z, viewMat, projMat);
+          if (!p) { visible = false; continue; }
+          bounds.left = Math.min(bounds.left, p.x); bounds.right = Math.max(bounds.right, p.x);
+          bounds.top = Math.min(bounds.top, p.y); bounds.bottom = Math.max(bounds.bottom, p.y);
+        }
+        return { id: b.spec.id, au: b.spec.au, orbitR: b.orbitR, angle: b.angle,
+          worldR: Math.hypot(b.worldPos[0], b.worldPos[1], b.worldPos[2]),
+          lineError: lineError, screenBounds: visible ? bounds : null };
+      })
+    };
   },
   screenToGalaxy: function (x, y) {
     var world = galaxyPointAt(x, y);

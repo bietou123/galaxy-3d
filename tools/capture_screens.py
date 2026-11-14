@@ -21,18 +21,21 @@ ROOT = Path(__file__).resolve().parent.parent
 PAGE = ROOT / "index.html"
 OUT = ROOT / "docs" / "screenshots"
 
-# (文件名, 深链接, 结束状态, 说明, 进入后再按的键)
+# (文件名, 深链接, 结束状态, 说明, 进入后再按的键, 进入后再点的控件)
 # 银河三个视角没有对应的哈希（只有 #galaxy/r<半径>），所以冷启动到默认
 # 视角后按 1 / 2 / 3 切俯视、侧视、盘内。
 SHOTS = [
-    ("01-localgroup", "#localgroup", "LOCALGROUP_IDLE", "本星系群", None),
-    ("02-galaxy-top", "", "GALAXY_IDLE", "银河俯视", "1"),
-    ("03-galaxy-edge", "", "GALAXY_IDLE", "银河侧视光带", "2"),
-    ("04-galaxy-inside", "", "GALAXY_IDLE", "银河盘内", "3"),
-    ("05-star-alphacen", "#star/alphacen", "STAR_IDLE", "南门二三合星", None),
-    ("06-solar", "#solar", "SOLAR_IDLE", "太阳系", None),
-    ("07-body-earth", "#body/earth", "PLANET_FOCUS", "地球聚焦", None),
-    ("08-earthmoon", "#earthmoon", "EARTHMOON_IDLE", "地月系", None),
+    ("01-localgroup", "#localgroup", "LOCALGROUP_IDLE", "本星系群", None, None),
+    ("02-galaxy-top", "", "GALAXY_IDLE", "银河俯视", "1", None),
+    ("03-galaxy-edge", "", "GALAXY_IDLE", "银河侧视光带", "2", None),
+    ("04-galaxy-inside", "", "GALAXY_IDLE", "银河盘内", "3", None),
+    ("05-star-alphacen", "#star/alphacen", "STAR_IDLE", "南门二三合星", None, None),
+    ("06-solar", "#solar", "SOLAR_IDLE", "太阳系真实轨道间距", None, None),
+    ("07-body-earth", "#body/earth", "PLANET_FOCUS", "地球聚焦", None, None),
+    ("08-earthmoon", "#earthmoon", "EARTHMOON_IDLE", "地月系", None, None),
+    ("11-moon", "#earthmoon/moon", "EARTHMOON_IDLE", "月球聚焦", None, None),
+    ("12-solar-inner", "#solar", "SOLAR_IDLE", "内行星真实轨道间距", None,
+     '[data-solar-view="inner"]'),
 ]
 
 # 关掉 CSS 过渡，并隐藏启动提示条：toast 会在开屏 1.6 秒后出现、
@@ -103,12 +106,15 @@ def main():
             " s.textContent = " + repr(NO_ANIM) + ";"
             " document.head.appendChild(s); });")
 
-        for name, suffix, state_name, desc, key in SHOTS:
+        for name, suffix, state_name, desc, key, control in SHOTS:
             boot(page, suffix)
             ok = settle(page, state_name)
             if key:
                 page.keyboard.press(key)
                 # 切视角会起一段相机补间，等它落定再截
+                ok = settle(page, state_name) and ok
+            if control:
+                page.locator(control).click()
                 ok = settle(page, state_name) and ok
             if not ok:
                 errors.append(name + ": scene did not settle")
