@@ -28,8 +28,8 @@
 <style>
   :root {
     --bg: #000208;
-    --panel: rgba(9, 15, 27, 0.70);
-    --panel-rich: rgba(9, 15, 27, 0.93);
+    --panel: rgba(12, 14, 19, 0.78);
+    --panel-rich: rgba(12, 14, 19, 0.93);
     --line: rgba(110, 160, 230, 0.16);
     --line-hot: rgba(77, 208, 255, 0.45);
     --text: #E6EEF8;
@@ -62,7 +62,7 @@
   .glass {
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 8px;
     backdrop-filter: blur(20px) saturate(150%);
     -webkit-backdrop-filter: blur(20px) saturate(150%);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255,255,255,0.05);
@@ -74,23 +74,23 @@
     pointer-events: none;
   }
   #brand h1 {
-    margin: 0; font-size: 25px; font-weight: 600; letter-spacing: .14em;
+    margin: 0; font-size: 25px; font-weight: 600; letter-spacing: 0;
     text-shadow: 0 0 28px rgba(77, 208, 255, .50), 0 0 60px rgba(77, 208, 255, .18);
   }
   #brand p {
-    margin: 5px 0 0; font-size: 10px; letter-spacing: .42em; color: var(--dim2);
+    margin: 5px 0 0; font-size: 10px; letter-spacing: 0; color: var(--dim2);
   }
 
   /* ---------- 侧栏 ---------- */
   #sidebar {
     position: fixed; top: 92px; left: 26px; width: 268px; z-index: 20;
-    max-height: calc(100vh - 220px);
+    max-height: calc(100vh - 260px);
     display: flex; flex-direction: column; overflow: hidden;
   }
   #sidebarHead {
     display: flex; align-items: center; justify-content: space-between;
     padding: 13px 15px 11px;
-    font-size: 10px; letter-spacing: .26em; color: var(--dim2);
+    font-size: 10px; letter-spacing: 0; color: var(--dim2);
     border-bottom: 1px solid var(--line);
   }
   #collapse {
@@ -113,6 +113,28 @@
   #sidebar.collapsed #bodyList,
   #sidebar.collapsed #crumbs,
   #sidebar.collapsed #sideFoot { display: none; }
+  #sidebar.collapsed #searchWrap { display: none; }
+  #searchWrap { padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  #objectSearch {
+    display: block; width: 100%; min-width: 0; height: 34px; padding: 6px 10px;
+    border: 1px solid var(--line); border-radius: 6px; outline: none;
+    background: rgba(0,0,0,.24); color: var(--text); font: inherit; font-size: 13px;
+    user-select: text; -webkit-user-select: text;
+  }
+  #objectSearch:focus-visible { border-color: var(--accent); outline: 1px solid var(--accent); }
+  #objectSearch::placeholder { color: var(--dim); }
+  #searchResults { display: none; margin: 6px 0 0; max-height: 240px; overflow-y: auto; }
+  #sidebar.searching #searchResults { display: block; }
+  #sidebar.searching #bodyList, #sidebar.searching #sideFoot { display: none; }
+  .searchResult {
+    display: flex; flex-direction: column; gap: 3px; width: 100%; min-height: 44px;
+    padding: 8px; text-align: left; border: 0; border-radius: 4px;
+    background: transparent; color: var(--text); font: inherit; cursor: pointer;
+  }
+  .searchResult:hover, .searchResult.active { background: var(--accent-soft); }
+  .searchResult span { font-size: 12px; overflow-wrap: anywhere; }
+  .searchResult small { color: var(--dim); font-size: 10px; overflow-wrap: anywhere; }
+  .searchEmpty { margin: 12px 8px; font-size: 12px; color: var(--dim); }
 
   /* 层级面包屑：本星系群 › 银河系 › 太阳系 › 地月系，点任意一段跳过去。
    * 放在 sidebarHead 外面而不是里面——手机上 sidebarHead 被隐藏，
@@ -127,7 +149,7 @@
   .crumb {
     flex: none; padding: 3px 5px; border: none; border-radius: 6px;
     background: none; cursor: pointer; font-family: inherit;
-    font-size: 11px; letter-spacing: .10em; color: var(--dim2);
+    font-size: 11px; letter-spacing: 0; color: var(--dim2);
     transition: color .15s, background .15s;
   }
   .crumb:hover { color: var(--accent); background: rgba(110, 160, 230, .09); }
@@ -144,18 +166,18 @@
   #sideFoot .tog { font-size: 11.5px; padding: 3px 4px; gap: 8px; }
   .sfHead {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 2px 4px 4px; font-size: 9px; letter-spacing: .22em; color: var(--dim2);
+    padding: 2px 4px 4px; font-size: 9px; letter-spacing: 0; color: var(--dim2);
   }
   #qualitySet {
     display: flex; gap: 1px; padding: 2px;
     background: rgba(0, 0, 0, .28); border-radius: 7px;
   }
-  #qualitySet .btn { padding: 3px 8px; font-size: 11px; }
+  #qualitySet .btn { flex: 1; min-width: 0; min-height: 28px; padding: 3px 4px; font-size: 11px; white-space: nowrap; }
 
   #bodyList li {
     position: relative;
     display: flex; align-items: center; gap: 11px;
-    padding: 9px 11px; border-radius: 9px; cursor: pointer;
+    padding: 9px 11px; border-radius: 8px; cursor: pointer;
     transition: background .16s cubic-bezier(.22,1,.36,1);
   }
   #bodyList li:hover { background: rgba(110, 160, 230, .09); }
@@ -176,20 +198,21 @@
   /* 本星系群成员的名字很长（「Barnard's Galaxy · NGC 6822 / IC 4895」），
      超出侧栏宽度时用省略号收尾，而不是顶出卡片边缘 */
   .zh { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .en { font-size: 9px; letter-spacing: .16em; color: var(--dim2); white-space: nowrap;
+  .en { font-size: 9px; letter-spacing: 0; color: var(--dim2); white-space: nowrap;
         overflow: hidden; text-overflow: ellipsis; }
 
   /* ---------- 信息面板 ---------- */
   #info {
     position: fixed; top: 24px; right: 26px; width: 336px; z-index: 25;
-    padding-bottom: 16px; overflow: hidden;
-    max-height: calc(100vh - 48px); overflow-y: auto;
+    overflow: hidden;
+    max-height: calc(100vh - var(--moon-bar-height, 0px) - 122px);
     scrollbar-width: thin; scrollbar-color: rgba(110,160,230,.28) transparent;
     opacity: 0; transform: translateX(26px); pointer-events: none;
     transition: opacity .34s cubic-bezier(.22,1,.36,1),
                 transform .34s cubic-bezier(.22,1,.36,1);
   }
   #info.show { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  #infoScroll { max-height: inherit; overflow-y: auto; padding-bottom: 16px; scrollbar-width: thin; scrollbar-color: rgba(110,160,230,.28) transparent; }
 
   #hero { height: 104px; position: relative; }
   #hero::after {
@@ -206,27 +229,27 @@
   }
   #closeInfo:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--line-hot); }
 
-  #infoZh { margin: 6px 20px 0; font-size: 21px; font-weight: 600; letter-spacing: .06em; }
-  #infoEn { margin: 3px 20px 15px; font-size: 10px; letter-spacing: .30em; color: var(--dim2); }
+  #infoZh { margin: 6px 20px 0; font-size: 21px; font-weight: 600; letter-spacing: 0; overflow-wrap: anywhere; }
+  #infoEn { margin: 3px 20px 15px; font-size: 10px; letter-spacing: 0; color: var(--dim2); overflow-wrap: anywhere; }
 
   #stats {
     display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
     background: var(--line); margin: 0 20px;
-    border-radius: 9px; overflow: hidden;
+    border-radius: 8px; overflow: hidden;
   }
   .stat { background: rgba(6, 10, 18, .80); padding: 9px 11px; }
   .stat k {
-    display: block; font-size: 9px; letter-spacing: .14em;
+    display: block; font-size: 9px; letter-spacing: 0;
     color: var(--dim2); margin-bottom: 4px;
   }
   .stat v {
     display: block; font-size: 13px; font-variant-numeric: tabular-nums;
-    color: #F3F9FF; letter-spacing: .01em;
+    color: #F3F9FF; letter-spacing: 0; overflow-wrap: anywhere;
   }
 
   #desc {
     margin: 15px 20px 17px; font-size: 12.5px; line-height: 1.8;
-    color: #AFBFD2; letter-spacing: .01em;
+    color: #AFBFD2; letter-spacing: 0;
   }
 
   /* ---------- 历史与人文 ---------- */
@@ -236,10 +259,10 @@
   #histWrap.hide { display: none; }
   #histHead {
     display: flex; align-items: baseline; justify-content: space-between;
-    font-size: 10px; letter-spacing: .22em; color: var(--accent);
+    font-size: 10px; letter-spacing: 0; color: var(--accent);
     margin-bottom: 7px;
   }
-  #histHead span { font-size: 8.5px; letter-spacing: .30em; color: var(--dim2); }
+  #histHead span { font-size: 8.5px; letter-spacing: 0; color: var(--dim2); }
   #histText {
     margin: 0; font-size: 12px; line-height: 1.85; color: #94A7BD;
     max-height: 168px; overflow-y: auto; padding-right: 4px;
@@ -251,9 +274,9 @@
   }
   #btnReset {
     display: block; width: calc(100% - 40px); margin: 0 20px; padding: 9px;
-    border-radius: 9px; cursor: pointer; font-family: inherit;
+    border-radius: 8px; cursor: pointer; font-family: inherit;
     background: var(--accent-soft); border: 1px solid var(--line-hot);
-    color: var(--accent); font-size: 12px; letter-spacing: .12em;
+    color: var(--accent); font-size: 12px; letter-spacing: 0;
     transition: background .15s, color .15s;
   }
   #btnReset:hover { background: rgba(77, 208, 255, .26); color: #fff; }
@@ -320,7 +343,7 @@
   #legendBtn {
     width: 100%; text-align: left; padding: 10px 14px;
     background: none; border: none; cursor: pointer; font-family: inherit;
-    color: var(--dim2); font-size: 10px; letter-spacing: .22em;
+    color: var(--dim2); font-size: 10px; letter-spacing: 0;
     transition: color .15s;
   }
   #legendBtn:hover { color: var(--accent); }
@@ -330,6 +353,7 @@
     transition: max-height .32s cubic-bezier(.22,1,.36,1), padding .32s;
   }
   #legend.open #legendBody { max-height: 300px; padding: 0 14px 13px; }
+  body.info-open #legend { opacity: 0; pointer-events: none; }
   #legendBody div { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px; }
   .mk { width: 9px; height: 9px; border-radius: 50%; flex: none; margin-top: 5px; }
 
@@ -341,7 +365,7 @@
   .lbl {
     position: absolute; top: 0; left: 0;
     display: flex; align-items: center; gap: 5px;
-    font-size: 11px; letter-spacing: .07em; white-space: nowrap;
+    font-size: 11px; letter-spacing: 0; white-space: nowrap;
     opacity: 0; transition: opacity .18s;
     text-shadow: 0 0 10px rgba(0, 8, 18, .95), 0 0 4px rgba(0, 8, 18, .95);
     will-change: transform;
@@ -367,7 +391,7 @@
   /* 本星系群标签第二行：英文名 + 分类，小一号、压暗，不抢主名 */
   .lbl em {
     display: block; font-style: normal; font-size: 8.5px;
-    letter-spacing: .16em; opacity: .58; margin-top: 1px;
+    letter-spacing: 0; opacity: .58; margin-top: 1px;
   }
 
   /* ---------- 月相徽标（只在从地球看月亮时出现） ---------- */
@@ -395,10 +419,10 @@
   }
   #moonText { display: flex; flex-direction: column; gap: 2px; }
   #moonText b {
-    font-size: 12.5px; font-weight: 600; letter-spacing: .12em; color: var(--text);
+    font-size: 12.5px; font-weight: 600; letter-spacing: 0; color: var(--text);
   }
   #moonText span {
-    font-size: 10px; letter-spacing: .08em; color: var(--dim2);
+    font-size: 10px; letter-spacing: 0; color: var(--dim2);
     font-variant-numeric: tabular-nums;
   }
 
@@ -418,12 +442,12 @@
     border-bottom: 1px solid rgba(160, 192, 230, .78);
   }
   #scaleLabel {
-    font-size: 10.5px; letter-spacing: .14em; color: #AFC0D4;
+    font-size: 10.5px; letter-spacing: 0; color: #AFC0D4;
     text-shadow: 0 0 10px rgba(0, 8, 18, .9);
   }
   #scaleNote {
     margin-top: 3px; max-width: 236px;
-    font-size: 9px; line-height: 1.6; letter-spacing: .04em; color: var(--dim2);
+    font-size: 9px; line-height: 1.6; letter-spacing: 0; color: var(--dim2);
   }
 
   /* ---------- 地月系工具栏（只在 L2 出现） ---------- */
@@ -442,7 +466,7 @@
   body.mode-earthmoon #moonBadge { bottom: 132px; }
   #moonBar .btn { padding: 5px 10px; font-size: 11.5px; }
   #moonBar .btn:disabled { opacity: .34; cursor: default; background: rgba(110, 160, 230, .07); }
-  .mbK { font-size: 9.5px; letter-spacing: .16em; color: var(--dim2); padding: 0 2px; }
+  .mbK { font-size: 9.5px; letter-spacing: 0; color: var(--dim2); padding: 0 2px; }
   #moonPhases, #moonRates {
     display: flex; gap: 1px; padding: 2px;
     background: rgba(0, 0, 0, .28); border-radius: 7px;
@@ -451,7 +475,7 @@
     padding: 4px 8px; font-variant-numeric: tabular-nums;
   }
   #moonScaleNote {
-    min-width: 64px; font-size: 9.5px; letter-spacing: .06em; color: var(--dim2);
+    min-width: 64px; font-size: 9.5px; letter-spacing: 0; color: var(--dim2);
   }
 
   /* ---------- 过场 ---------- */
@@ -464,7 +488,7 @@
   #toast {
     position: fixed; left: 50%; top: 50%; z-index: 41; pointer-events: none;
     transform: translate(-50%, -50%);
-    font-size: 12px; letter-spacing: .30em; color: #BFE6FF;
+    font-size: 12px; letter-spacing: 0; color: #BFE6FF;
     opacity: 0; transition: opacity .48s ease; text-align: center;
     text-shadow: 0 0 22px rgba(77, 208, 255, .75);
   }
@@ -478,7 +502,7 @@
     transition: opacity .5s ease;
   }
   #boot.gone { opacity: 0; pointer-events: none; }
-  #boot .t { font-size: 11px; letter-spacing: .34em; color: var(--dim2); }
+  #boot .t { font-size: 11px; letter-spacing: 0; color: var(--dim2); }
   #boot .track {
     width: 190px; height: 2px; border-radius: 2px;
     background: rgba(110, 160, 230, .14); overflow: hidden;
@@ -500,7 +524,7 @@
   #help {
     position: fixed; left: 50%; top: 50%; z-index: 35;
     width: min(430px, calc(100vw - 40px)); max-height: 82vh;
-    padding: 20px 22px 14px; overflow-y: auto; border-radius: 16px;
+    padding: 20px 22px 14px; overflow-y: auto; border-radius: 8px;
     opacity: 0; pointer-events: none;
     transform: translate(-50%, -46%) scale(.97);
     transition: opacity .26s cubic-bezier(.22,1,.36,1),
@@ -510,10 +534,10 @@
   #help.show { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
   #help h3 {
     margin: 0 0 14px; padding-right: 30px; font-size: 13px; font-weight: 600;
-    letter-spacing: .18em; color: var(--text);
+    letter-spacing: 0; color: var(--text);
     display: flex; align-items: baseline; justify-content: space-between;
   }
-  #help h3 span { font-size: 9px; font-weight: 400; letter-spacing: .30em; color: var(--dim2); }
+  #help h3 span { font-size: 9px; font-weight: 400; letter-spacing: 0; color: var(--dim2); }
   #help dl { margin: 0; }
   #help dl div {
     display: flex; gap: 12px; align-items: baseline;
@@ -522,7 +546,7 @@
   #help dl div:last-child { border-bottom: none; }
   #help dt {
     flex: none; width: 118px; font-size: 11.5px;
-    color: var(--accent); letter-spacing: .04em;
+    color: var(--accent); letter-spacing: 0;
   }
   #help dd { margin: 0; font-size: 11.5px; line-height: 1.6; color: #A6B7CB; }
   #closeHelp {
@@ -550,7 +574,7 @@
   /* ---------- 演示模式提示 ---------- */
   #demoHint {
     position: fixed; right: 26px; bottom: 26px; z-index: 30;
-    font-size: 11px; letter-spacing: .22em; color: var(--dim2);
+    font-size: 11px; letter-spacing: 0; color: var(--dim2);
     opacity: 0; transition: opacity .6s ease; pointer-events: none;
     text-shadow: 0 0 14px rgba(0, 0, 0, .9);
   }
@@ -575,14 +599,15 @@
     #info { width: 300px; }
     #legend { width: 196px; }
   }
-  @media (max-width: 780px) {
+  @media (max-width: 780px), (max-height: 500px) {
     #brand { top: 14px; left: 16px; }
     #brand h1 { font-size: 19px; }
-    #brand p { font-size: 9px; letter-spacing: .3em; }
+    #brand p { font-size: 9px; }
 
     #sidebar {
       top: auto; bottom: 0; left: 0; right: 0; width: auto;
-      max-height: 40vh; border-radius: 14px 14px 0 0;
+      max-height: 40dvh; border-radius: 8px 8px 0 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
     #sidebarHead { display: none; }
     #bodyList {
@@ -592,30 +617,63 @@
     #bodyList li.active::before { display: none; }
 
     #info {
-      top: auto; bottom: 0; left: 0; right: 0; width: auto;
-      border-radius: 14px 14px 0 0; max-height: 64vh; overflow-y: auto;
+      top: auto; bottom: calc(var(--dock-height, 140px) + var(--bar-height, 44px) + var(--moon-bar-height, 0px) + 24px);
+      left: 8px; right: 8px; width: auto; border-radius: 8px;
+      max-height: min(26dvh, max(110px, calc(100dvh - var(--dock-height, 140px) - var(--bar-height, 44px) - var(--moon-bar-height, 0px) - 110px)));
     }
+    #hero { height: 56px; }
     #legend { display: none; }
     /* 手机屏放不下比例尺的注记，左上角还有品牌名；这一层只保留三个月相读数 */
     #scale { display: none; }
     #moonBadge { bottom: 18px; }
-    /* 底部抽屉只有 40vh，底部的显示开关挤不下，手机上不提供 */
-    #sideFoot { display: none; }
+    /* 小屏保留画质档位，显示开关使用主工具栏。 */
+    #sideFoot { padding: 4px 8px; }
+    #sideFoot .tog, #sideFoot .sfHead { display: none; }
+    #searchWrap { padding: 5px 8px; flex: none; }
+    #objectSearch { height: 32px; font-size: 16px; }
+    #searchResults { max-height: 20dvh; }
+    #sidebar.searching { max-height: 46dvh; }
     #crumbs { padding: 7px 10px 6px; }
     /* 工具栏搬到抽屉上方，放不下时换行 */
     #moonBar {
-      left: 0; right: 0; bottom: calc(40vh + 58px); transform: none;
+      left: 8px; right: 8px; bottom: calc(var(--dock-height, 140px) + var(--bar-height, 44px) + 18px); transform: none;
       flex-wrap: wrap; justify-content: center;
       row-gap: 4px; padding: 6px 8px;
     }
     .mbK { display: none; }
-    body.mode-earthmoon #moonBadge { bottom: 18px; }
+    #moonBadge, body.mode-earthmoon #moonBadge { top: 12px; bottom: auto; left: auto; right: 12px; }
     #bar {
-      bottom: calc(40vh + 12px);
+      bottom: calc(var(--dock-height, 140px) + 10px);
+      left: 8px; right: 8px; transform: none;
       flex-wrap: wrap; justify-content: center;
-      max-width: 94vw; row-gap: 4px;
+      max-width: none; row-gap: 4px;
     }
+    #btnBack { width: 36px; height: 34px; padding: 0; flex: none; font-size: 0; }
+    #btnBack::before { content: "←"; font-size: 18px; line-height: 1; }
     .tog span:last-child { display: none; }
+    body.search-open #info { opacity: 0; pointer-events: none; }
+  }
+  @media (max-width: 780px) and (max-height: 650px), (max-height: 500px) {
+    #bar, #moonBar {
+      flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    #bar > *, #moonBar > * { flex: none; }
+    #hero { height: 36px; }
+    #info { max-height: 120px; }
+    body.info-open #bodyList { display: none; }
+  }
+  @media (min-width: 600px) and (max-height: 500px) {
+    #sidebar { display: grid; grid-template-columns: 200px minmax(0, 1fr) 160px; max-height: 60dvh; }
+    #crumbs { grid-column: 1 / -1; grid-row: 2; padding: 4px 8px; }
+    #searchWrap { grid-column: 1; grid-row: 1; }
+    #bodyList { grid-column: 2; grid-row: 1; min-width: 0; padding: 4px; }
+    #sideFoot { grid-column: 3; grid-row: 1; justify-content: center; border-top: 0; }
+    #sidebar.searching { display: flex; }
+    #sidebar.searching #searchWrap { width: 100%; }
+    body.info-open #bodyList { display: flex; }
+    #info { left: auto; right: 8px; top: 12px; bottom: auto; width: 280px; max-height: calc(100dvh - var(--dock-height, 80px) - var(--bar-height, 44px) - var(--moon-bar-height, 0px) - 36px); }
+    body.info-open #moonBadge { right: 300px; }
   }
 
   /* 系统要求减少动态效果：过渡压到接近瞬时，演示巡游不自动播放。
@@ -645,6 +703,11 @@
     <span>天体导航</span>
     <button id="collapse" title="收起/展开" aria-label="收起或展开天体导航">−</button>
   </div>
+  <div id="searchWrap">
+    <input id="objectSearch" type="search" role="combobox" placeholder="搜索天体" aria-label="搜索天体" autocomplete="off"
+           spellcheck="false" aria-autocomplete="list" aria-controls="searchResults" aria-expanded="false">
+    <div id="searchResults" role="listbox" aria-label="搜索结果"></div>
+  </div>
   <ul id="bodyList"></ul>
   <div id="sideFoot">
     <div class="sfHead">显示<span>VIEW</span></div>
@@ -661,7 +724,8 @@
       <input type="checkbox" id="chkScale" checked><span class="sw"></span><span>比例尺</span>
     </label>
     <div class="sfHead">画质<span>QUALITY</span></div>
-    <div id="qualitySet">
+    <div id="qualitySet" role="group" aria-label="画质">
+      <button class="btn" data-quality="auto">自动</button>
       <button class="btn" data-quality="high">高</button>
       <button class="btn" data-quality="mid">中</button>
       <button class="btn" data-quality="low">低</button>
@@ -670,17 +734,19 @@
 </aside>
 
 <aside id="info" class="glass" role="dialog" aria-modal="false" aria-label="天体资料">
-  <div id="hero"></div>
   <button id="closeInfo" title="关闭" aria-label="关闭天体资料">×</button>
-  <h2 id="infoZh"></h2>
-  <p id="infoEn"></p>
-  <div id="stats"></div>
-  <p id="desc"></p>
-  <div id="histWrap">
-    <div id="histHead">历史与人文<span>HISTORY</span></div>
-    <p id="histText"></p>
+  <div id="infoScroll">
+    <div id="hero"></div>
+    <h2 id="infoZh"></h2>
+    <p id="infoEn"></p>
+    <div id="stats"></div>
+    <p id="desc"></p>
+    <div id="histWrap">
+      <div id="histHead">历史与人文<span>HISTORY</span></div>
+      <p id="histText"></p>
+    </div>
+    <button id="btnReset">复位视角</button>
   </div>
-  <button id="btnReset">复位视角</button>
 </aside>
 
 <div id="bar" class="glass">
@@ -3959,7 +4025,7 @@ function panCamera(dx, dy) {
       && state !== ST.STAR && state !== ST.EARTHMOON) return;
 
   // 目标平面上一像素对应的世界长度
-  var k = 2 * Math.tan(cam.fov * 0.5) * cam.radius / Math.max(1, screenH);
+  var k = 2 * cam.radius / Math.max(1, screenH * projMat[5]);
   camBasis();
   var r = camBasis._r, u = camBasis._u;
 
@@ -4074,14 +4140,14 @@ canvas.addEventListener('wheel', function (e) {
 
   // 本星系群层：贴着最近点继续内推，如果正对银河系就回到银河层
   if (state === ST.GROUP && cam.tRadius <= cam.minR + 1 && delta < 0) {
-    var near = galaxyNearScreenPoint(screenW * 0.5, screenH * 0.5, 150);
+    var near = galaxyNearScreenPoint(sceneFrame.x, sceneFrame.y, 150);
     if (near && near.id === 'milkyway') { exitLocalGroup(); return; }
     showToast('点击银河系标记即可返回银河视角', 1600);
   }
 
   // 太阳系层一路放大：凑近某颗行星就自动聚焦
   if (state === ST.SOLAR && cam.tRadius <= CFG.solar.diveR) {
-    var b = bodyNearScreenPoint(screenW * 0.5, screenH * 0.5, 110);
+    var b = bodyNearScreenPoint(sceneFrame.x, sceneFrame.y, 110);
     if (b) focusBody(b.spec.id);
   }
 
@@ -4532,6 +4598,7 @@ function setUIMode(mode) {
   backBtn.textContent = mode === 'earthmoon' ? '← 返回太阳系'
                       : mode === 'star' ? '← 返回银河系'
                       : '← 返回银河';
+  backBtn.title = backBtn.textContent.replace('← ', '');
   /* 地月系工具栏、全局倍速条的显隐都挂在这一个类上，CSS 里集中处理 */
   document.body.classList.toggle('mode-earthmoon', mode === 'earthmoon');
   renderList(mode);
@@ -4623,6 +4690,7 @@ var LAYER_ZH = {
 };
 
 function goToLayer(layer) {
+  cancelSearchNavigation();
   if (!layer || layer === layerNow()) return;
   navWant = layer;
   navTries = 0;
@@ -4633,7 +4701,12 @@ function updateQualityButtons() {
   if (typeof quality === 'undefined' || !quality) return;
   var btns = document.querySelectorAll('[data-quality]');
   for (var i = 0; i < btns.length; i++) {
-    btns[i].classList.toggle('on', btns[i].dataset.quality === quality.level);
+    var selected = btns[i].dataset.quality === quality.mode;
+    btns[i].classList.toggle('on', selected);
+    btns[i].setAttribute('aria-pressed', String(selected));
+    if (btns[i].dataset.quality === 'auto') {
+      btns[i].title = '自动画质，当前' + ({ high: '高', mid: '中', low: '低' })[quality.level] + '档';
+    }
   }
 }
 
@@ -4776,6 +4849,9 @@ function showInfo(d) {
   document.getElementById('stats').innerHTML = html;
 
   infoEl.classList.add('show');
+  document.body.classList.add('info-open');
+  document.getElementById('infoScroll').scrollTop = 0;
+  sceneFrameDirty = true;
 }
 
 /** 本星系群成员的面板：字段与行星不同，所以自带行表（第四卷 4.5） */
@@ -4800,7 +4876,11 @@ function showGalaxyInfo(g) {
   });
 }
 
-function hideInfo() { infoEl.classList.remove('show'); }
+function hideInfo() {
+  infoEl.classList.remove('show');
+  document.body.classList.remove('info-open');
+  sceneFrameDirty = true;
+}
 
 /* ==========================================================================
  *  15.  层切换与聚焦
@@ -4836,13 +4916,16 @@ function flushPendingBody() {
     pendingEarthMoon = false;
     pendingBodyId = null;
     later(function () {
+      if (state !== ST.SOLAR || navWant || searchDestination) return;
       focusBody('earth');
       /* 不能按 CFG.tween.focus 写死延时再进地月系：补间是按帧 dt 推进的，
        * 低帧率下 1200ms 的补间会拖得更久，enterEarthMoon 会因 state 仍是
        * TRANS 直接早退。挂在补间完成回调上，等真正落到 FOCUS 再进。 */
       if (state === ST.TRANS) {
         camTweenDone.push(function () {
-          later(function () { enterEarthMoon(); }, 60);
+          later(function () {
+            if (!navWant && !searchDestination) enterEarthMoon();
+          }, 60);
         });
       }
     }, 40);
@@ -4851,7 +4934,9 @@ function flushPendingBody() {
   if (!pendingBodyId) return;
   var id = pendingBodyId;
   pendingBodyId = null;
-  later(function () { focusBody(id); }, 40);
+  later(function () {
+    if (state === ST.SOLAR && !navWant && !searchDestination) focusBody(id);
+  }, 40);
 }
 
 function enterSolar() {
@@ -4975,8 +5060,8 @@ function sunMarkerOnScreen() {
 
   // 与 updatePickables() 的可见判定保持同一套尺寸公式，避免「能点到却进不去」
   var sr = Math.max(16, 70 * p.pxPerUnit);
-  var dx = p.x - screenW * 0.5;
-  var dy = p.y - screenH * 0.5;
+  var dx = p.x - sceneFrame.x;
+  var dy = p.y - sceneFrame.y;
   return { x: p.x, y: p.y, sr: sr, dist: Math.sqrt(dx * dx + dy * dy) };
 }
 
@@ -4985,7 +5070,8 @@ function tryDive(silent) {
   if (state !== ST.GALAXY) return false;
 
   var m = sunMarkerOnScreen();
-  if (m && m.dist <= DIVE_ALIGN_PX && m.sr >= DIVE_SUN_PX) {
+  var minPixels = Math.min(DIVE_SUN_PX, Math.max(20, DIVE_SUN_PX * sceneFrame.scale));
+  if (m && m.dist <= DIVE_ALIGN_PX && m.sr >= minPixels) {
     diveToSolar();
     return true;
   }
@@ -5497,8 +5583,10 @@ function exitEarthMoon() {
     focusedEarthMoonPart = null;
     syncHash('solar');
     /* 从聚焦态进来的就回到那颗行星；从太阳系默认构图进来的就停在默认构图 */
-    if (returnId) {
-      later(function () { focusBody(returnId, 3.2, true); }, 40);
+    if (returnId && !navWant && !searchDestination) {
+      later(function () {
+        if (state === ST.SOLAR && !navWant && !searchDestination) focusBody(returnId, 3.2, true);
+      }, 40);
     }
   }, 700 + CFG.tween.layer * 0.76 + 90);
 
@@ -6060,6 +6148,10 @@ function setGalaxyView(mode, instant) {
 
 var pickables = [];
 var screenW = 1, screenH = 1;
+var sceneFrame = { x: 0, y: 0, left: 0, top: 0, right: 1, bottom: 1, scale: 1 };
+var sceneFrameDirty = true;
+var sceneFrameMode = '';
+var projectionFov = 0, projectionNear = 0;
 
 /** 把世界坐标投影到屏幕像素坐标 */
 function projectToScreen(wx, wy, wz, viewMat, projMat) {
@@ -6077,7 +6169,7 @@ function projectToScreen(wx, wy, wz, viewMat, projMat) {
     x: (cx / cw * 0.5 + 0.5) * screenW,
     y: (-cy / cw * 0.5 + 0.5) * screenH,
     depth: -vz,
-    pxPerUnit: (screenH * 0.5) / Math.tan(cam.fov * 0.5) / cw
+    pxPerUnit: screenH * 0.5 * projMat[5] / cw
   };
 }
 
@@ -6225,14 +6317,12 @@ function pickAt(px, py) {
 /** 屏幕坐标 → 银盘平面（y = 0）上的世界坐标；打偏或射线背离时返回 null */
 function galaxyPointAt(px, py) {
   camBasis();
-  var t = Math.tan(cam.fov * 0.5);
-  var aspect = screenW / Math.max(1, screenH);
-  var nx = (px / screenW) * 2 - 1;
-  var ny = 1 - (py / screenH) * 2;
+  var nx = ((px / screenW) * 2 - 1 + projMat[8]) / projMat[0];
+  var ny = (1 - (py / screenH) * 2 + projMat[9]) / projMat[5];
   var f = camBasis._f, r = camBasis._r, u = camBasis._u;
 
   var d = [0, 0, 0];
-  for (var i = 0; i < 3; i++) d[i] = f[i] + r[i] * nx * t * aspect + u[i] * ny * t;
+  for (var i = 0; i < 3; i++) d[i] = f[i] + r[i] * nx + u[i] * ny;
   var dl = Math.hypot(d[0], d[1], d[2]) || 1;
   d[0] /= dl; d[1] /= dl; d[2] /= dl;
 
@@ -6704,19 +6794,185 @@ bindToggle('chkName2', setLabels);
 bindToggle('chkDust', setDust);
 bindToggle('chkScale', setScaleVisible);
 
-/* 画质按钮：手动选择之后停止自动降级，否则低配机器会在 120 帧后
- * 又把人手选的高画质压回 low，看起来像按钮没生效。 */
+/* 手动档锁定画质；自动档重新采样。 */
 var qualityBtns = document.querySelectorAll('[data-quality]');
 for (var qi = 0; qi < qualityBtns.length; qi++) {
   (function (btn) {
     btn.addEventListener('click', function () {
-      perf.done = true;
-      setQuality(btn.dataset.quality);
-      updateQualityButtons();
+      chooseQuality(btn.dataset.quality);
       showToast('画质：' + (btn.textContent || '').trim(), 900);
     });
   })(qualityBtns[qi]);
 }
+
+/* Search destinations use the same queued, one-layer-at-a-time navigation. */
+var objectSearch = document.getElementById('objectSearch');
+var searchResultsEl = document.getElementById('searchResults');
+var searchItems = [];
+var searchMatches = [];
+var searchActive = 0;
+var searchDestination = null;
+
+function searchText(value) {
+  return String(value || '').normalize('NFKC').toLowerCase().replace(/[\s_-]+/g, '');
+}
+
+function buildSearchIndex() {
+  searchItems = [];
+  function add(kind, item, detail, systemId, aliases) {
+    searchItems.push({ kind: kind, id: item.id, zh: item.zh, en: item.en || '',
+      detail: detail, systemId: systemId || null,
+      text: searchText([item.id, item.zh, item.en, item.cat, aliases].join(' ')) });
+  }
+  add('solar', { id: 'solar-system', zh: '太阳系', en: 'Solar System' }, '太阳系');
+  [SUN].concat(PLANETS).forEach(function (item) { add('solar', item, '太阳系'); });
+  add('earthmoon', { id: 'moon', zh: '月球', en: 'Moon' }, '地月系');
+  GALAXIES.forEach(function (item) {
+    add(item.id === 'milkyway' ? 'galaxy' : 'group', item, '本星系群', null, item.cat);
+  });
+  STARS.forEach(function (item) {
+    if (item.id === 'sol') return;
+    var aliases = (item.comps || []).map(function (c) { return c.zh + ' ' + (c.en || ''); }).join(' ');
+    add('star', item, '恒星系统', item.id, aliases);
+    (item.worlds || []).forEach(function (w) {
+      add('world', w, item.zh + ' · ' + (w.status === 'candidate' ? '候选行星' : '行星'), item.id);
+    });
+  });
+}
+
+function renderSearch() {
+  var query = searchText(objectSearch.value);
+  document.getElementById('sidebar').classList.toggle('searching', !!query);
+  document.body.classList.toggle('search-open', !!query);
+  sceneFrameDirty = true;
+  objectSearch.setAttribute('aria-expanded', String(!!query));
+  objectSearch.removeAttribute('aria-activedescendant');
+  searchResultsEl.textContent = '';
+  searchActive = 0;
+  searchMatches = query ? searchItems.filter(function (item) {
+    return item.text.indexOf(query) !== -1;
+  }).sort(function (a, b) {
+    function rank(item) {
+      return searchText(item.zh) === query || searchText(item.id) === query ? 0
+        : searchText(item.zh).indexOf(query) === 0 ? 1 : 2;
+    }
+    return rank(a) - rank(b);
+  }).slice(0, 24) : [];
+  if (!query) return;
+  if (!searchMatches.length) {
+    var empty = document.createElement('p');
+    empty.className = 'searchEmpty'; empty.textContent = '没有匹配的天体';
+    empty.setAttribute('role', 'status');
+    searchResultsEl.appendChild(empty);
+    return;
+  }
+  searchMatches.forEach(function (item, index) {
+    var button = document.createElement('button');
+    button.className = 'searchResult'; button.type = 'button';
+    button.id = 'search-option-' + index;
+    button.dataset.objectId = item.id;
+    button.setAttribute('role', 'option'); button.tabIndex = -1;
+    var name = document.createElement('span'); name.textContent = item.zh;
+    var detail = document.createElement('small');
+    detail.textContent = item.detail + ' · ' + (item.en || item.id);
+    button.appendChild(name); button.appendChild(detail);
+    button.addEventListener('click', function () { selectSearchResult(item); });
+    searchResultsEl.appendChild(button);
+  });
+  updateSearchActive();
+}
+
+function updateSearchActive() {
+  var buttons = searchResultsEl.querySelectorAll('.searchResult');
+  for (var i = 0; i < buttons.length; i++) {
+    var selected = i === searchActive;
+    buttons[i].classList.toggle('active', selected);
+    buttons[i].setAttribute('aria-selected', String(selected));
+    if (selected) {
+      objectSearch.setAttribute('aria-activedescendant', buttons[i].id);
+      buttons[i].scrollIntoView({ block: 'nearest' });
+    }
+  }
+}
+
+function selectSearchResult(item) {
+  if (demoMode) setDemo(false);
+  pendingBodyId = pendingGalaxyId = pendingSystemBodyId = pendingEarthMoonPart = null;
+  pendingEarthMoon = false;
+  searchDestination = item;
+  navTries = 0;
+  navWant = item.kind === 'star' || item.kind === 'world'
+    ? (state === ST.STAR && activeStarSystem && activeStarSystem.id === item.systemId ? 'star' : 'galaxy')
+    : item.kind;
+  objectSearch.value = ''; objectSearch.blur(); renderSearch();
+}
+
+function updateSearchNavigation() {
+  if (!searchDestination || navWant || state === ST.TRANS || camTween.active) return;
+  var item = searchDestination;
+  if (item.kind === 'star' || item.kind === 'world') {
+    if (state === ST.GALAXY) {
+      enterStarSystem(item.systemId);
+      if (item.kind === 'star') searchDestination = null;
+      return;
+    }
+    if (state !== ST.STAR || !activeStarSystem || activeStarSystem.id !== item.systemId) return;
+    searchDestination = null;
+    if (item.kind === 'world') focusSystemBody(findSystemWorld(item.systemId, item.id));
+    else { resetView(); showStarInfo(activeStarSystem.spec); }
+  } else {
+    searchDestination = null;
+    if (item.kind === 'group') focusGalaxy(item.id);
+    else if (item.kind === 'galaxy') { resetView(); showGalaxyInfo(findGalaxyById(item.id)); }
+    else if (item.kind === 'earthmoon') focusEarthMoonPart(item.id);
+    else if (item.id === 'solar-system') resetView();
+    else focusBody(item.id);
+  }
+}
+
+function cancelSearchNavigation() {
+  if (!searchDestination) return;
+  searchDestination = null;
+  navWant = null;
+  navTries = 0;
+}
+
+objectSearch.addEventListener('input', renderSearch);
+objectSearch.addEventListener('focus', function () {
+  if (demoMode) setDemo(false);
+  cancelSearchNavigation();
+  for (var code in keys) keys[code] = false;
+});
+objectSearch.addEventListener('keydown', function (e) {
+  if (e.isComposing || e.keyCode === 229) return;
+  if (e.key === 'Escape') {
+    e.preventDefault(); objectSearch.value = ''; renderSearch(); objectSearch.blur();
+  } else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && searchMatches.length) {
+    e.preventDefault();
+    searchActive = (searchActive + (e.key === 'ArrowDown' ? 1 : -1) + searchMatches.length) % searchMatches.length;
+    updateSearchActive();
+  } else if (e.key === 'Enter' && searchMatches.length) {
+    e.preventDefault(); selectSearchResult(searchMatches[searchActive]);
+  }
+});
+canvas.addEventListener('pointerdown', cancelSearchNavigation);
+canvas.addEventListener('wheel', cancelSearchNavigation, { passive: true });
+buildSearchIndex();
+
+function measureDock() {
+  var root = document.documentElement;
+  [['--dock-height', 'sidebar'], ['--bar-height', 'bar'], ['--moon-bar-height', 'moonBar']].forEach(function (pair) {
+    var height = Math.ceil(document.getElementById(pair[1]).getBoundingClientRect().height) + 'px';
+    if (root.style.getPropertyValue(pair[0]) !== height) root.style.setProperty(pair[0], height);
+  });
+  sceneFrameDirty = true;
+}
+if (window.ResizeObserver) {
+  var dockObserver = new ResizeObserver(measureDock);
+  ['sidebar', 'bar', 'moonBar', 'info', 'brand', 'moonBadge'].forEach(function (id) { dockObserver.observe(document.getElementById(id)); });
+}
+window.addEventListener('resize', measureDock);
+measureDock();
 
 /* ---- 地月系工具栏 ---- */
 var followMoonBtn = document.getElementById('btnFollowMoon');
@@ -6893,6 +7149,7 @@ function updateDemoTour(dt) {
 function setDemo(on) {
   demoMode = !!on;
   document.body.classList.toggle('demo', demoMode);
+  sceneFrameDirty = true;
 
   if (demoMode) {
     setHelp(false);
@@ -6997,7 +7254,7 @@ function scaleTextFor(unit, v) {
 }
 
 /* 每帧调用：条形宽度跟手，文字最多每 200 ms 换一次档位。
- * pxPerWu = screenH / (2·tan(fov/2)·radius)，是 panCamera 里世界/像素比例的倒数。 */
+ * 使用实际投影的像素密度，与 panCamera 的世界/像素比例一致。 */
 function updateScale(now) {
   /* 用户在侧栏关掉比例尺后仍旧每帧算一遍是白费；先摘掉显示，再不动文字，
    * 下次打开时 updateScale 会在 200 ms 内把档位重新算对。 */
@@ -7009,7 +7266,7 @@ function updateScale(now) {
   if (!mode) return;
 
   var spec = scaleSpecFor(mode);
-  var pxPerWu = screenH / Math.max(1e-6, 2 * Math.tan(cam.fov * 0.5) * cam.radius);
+  var pxPerWu = screenH * projMat[5] / Math.max(1e-6, 2 * cam.radius);
 
   if (!spec) {
     scaleEl.classList.add('show');
@@ -7106,7 +7363,7 @@ function zoomStep(factor) {
     return;
   }
   if (state === ST.SOLAR && cam.tRadius <= CFG.solar.diveR) {
-    var b = bodyNearScreenPoint(screenW * 0.5, screenH * 0.5, 110);
+    var b = bodyNearScreenPoint(sceneFrame.x, sceneFrame.y, 110);
     if (b) focusBody(b.spec.id);
   }
   /* 第五卷 5.7：聚焦地球后继续缩小，半径低于 enterR 就进入地月系。
@@ -7149,7 +7406,7 @@ function nearestPickable(px, py, maxD) {
 function focusNearest() {
   if (state === ST.TRANS) return;
 
-  var cx = screenW * 0.5, cy = screenH * 0.5;
+  var cx = sceneFrame.x, cy = sceneFrame.y;
 
   if (state === ST.GALAXY) {
     var it = nearestPickable(cx, cy, 160);
@@ -7169,8 +7426,15 @@ var PAN_KEYS = {
 };
 
 window.addEventListener('keydown', function (e) {
+  if (!e.isComposing && !e.altKey && (e.ctrlKey || e.metaKey) && e.code === 'KeyK') {
+    e.preventDefault();
+    document.getElementById('sidebar').classList.remove('collapsed');
+    objectSearch.focus(); return;
+  }
+  if (e.isComposing || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
   // 有 Ctrl / Cmd / Alt 时一律让给浏览器（复制、刷新、切换标签等）
   if (e.ctrlKey || e.metaKey || e.altKey) return;
+  cancelSearchNavigation();
 
   var code = e.code;
 
@@ -7389,8 +7653,11 @@ var dpr = 1;
 var pixelRatioUniform = 1;
 
 /* ---- 自适应画质 ----
-   启动后跳过预热帧，采样 120 帧求平均帧时间；只降不升，避免来回抖动。 */
+   使用真实帧间隔按时间窗口采样；只降不升，手动档不参与采样。 */
+var QUALITY_STORAGE_KEY = 'galaxy-3d:quality';
+var QUALITY_LEVELS = ['low', 'mid', 'high'];
 var quality = {
+  mode: 'auto',    // auto | high | mid | low
   level: 'high',   // high | mid | low
   ratio: 1,        // 银河粒子与暗尘的抽样比例
   dprCap: 2,       // devicePixelRatio 上限
@@ -7400,7 +7667,8 @@ var quality = {
 };
 
 function setQuality(level) {
-  if (quality.level === level) return;
+  if (QUALITY_LEVELS.indexOf(level) === -1) return false;
+  if (quality.level === level) { updateQualityButtons(); return true; }
   quality.level = level;
 
   if (level === 'low') {
@@ -7414,31 +7682,64 @@ function setQuality(level) {
     quality.dust = true; quality.clusters = true; quality.bgRatio = 1;
   }
   resize();
+  updateQualityButtons();
+  return true;
 }
 
-var perf = { skip: 90, n: 0, acc: 0, done: false };
+var perf = { warm: 1.2, n: 0, acc: 0, avg: 0, windows: 0, done: false };
+
+function resetPerf(warm) {
+  perf.warm = warm;
+  perf.n = 0;
+  perf.acc = 0;
+}
+
+function validQualityMode(mode) {
+  return mode === 'auto' || QUALITY_LEVELS.indexOf(mode) !== -1;
+}
+
+function chooseQuality(mode, persist) {
+  if (!validQualityMode(mode)) return false;
+  quality.mode = mode;
+  perf.done = mode !== 'auto';
+  perf.avg = 0;
+  perf.windows = 0;
+  resetPerf(1.2);
+  setQuality(mode === 'auto' ? 'high' : mode);
+  if (persist !== false) {
+    try {
+      localStorage.setItem(QUALITY_STORAGE_KEY, JSON.stringify({ version: 1, mode: mode }));
+    } catch (err) { /* Storage can be disabled for local files or private browsing. */ }
+  }
+  return true;
+}
 
 function watchPerf(dt) {
-  if (perf.done || !bootHidden) return;
-  if (perf.skip > 0) { perf.skip--; return; }
+  if (perf.done || !bootHidden || dt <= 0 || !isFinite(dt)) return;
+  if (perf.warm > 0) { perf.warm = Math.max(0, perf.warm - dt); return; }
 
   perf.acc += dt;
   perf.n++;
-  if (perf.n < 120) return;
+  if (perf.acc < 1.5 || perf.n < 12) return;
 
-  perf.done = true;
-  var avg = perf.acc / perf.n;
-  if (avg > 1 / 20) setQuality('low');
-  else if (avg > 1 / 32) setQuality('mid');
+  perf.avg = perf.acc / perf.n;
+  perf.windows++;
+  var level = perf.avg > 1 / 20 ? 'low' : (perf.avg > 1 / 32 ? 'mid' : 'high');
+  var lower = QUALITY_LEVELS.indexOf(level) < QUALITY_LEVELS.indexOf(quality.level);
+  if (lower) setQuality(level);
+  resetPerf(lower ? 0.6 : 0);
 }
 
-/* ?quality=high|mid|low 可强制指定画质，便于截图对比与低配机器复现 */
+/* URL 优先于本地偏好，但不覆盖已保存的选择。 */
 function applyQualityOverride() {
-  var m = /[?&]quality=(high|mid|low)\b/.exec(location.search);
-  if (!m) return;
-  quality.level = '';
-  setQuality(m[1]);
-  perf.done = true;
+  var mode = 'auto';
+  try {
+    var saved = JSON.parse(localStorage.getItem(QUALITY_STORAGE_KEY));
+    if (saved && saved.version === 1 && validQualityMode(saved.mode)) mode = saved.mode;
+  } catch (err) { /* Invalid or unavailable storage falls back to automatic quality. */ }
+  var override = new URLSearchParams(location.search).get('quality');
+  if (validQualityMode(override)) mode = override;
+  chooseQuality(mode, false);
 }
 
 /* ?seed=N 可覆盖默认种子。同一个种子永远生成同一张银河，
@@ -7470,10 +7771,58 @@ function resize() {
   canvas.style.height = screenH + 'px';
 
   gl.viewport(0, 0, canvas.width, canvas.height);
-  M4.perspective(projMat, cam.fov, screenW / screenH,
-                 cam.near, CFG.camera.far);
+  sceneFrameDirty = true;
+  updateSceneFrame();
 }
 window.addEventListener('resize', resize);
+
+/* Keep the focal point in the unobstructed part of a compact viewport.
+ * Picking, panning, and scale calculations use this same projection. */
+function updateSceneFrame() {
+  var close = (focusedId && layerTarget.solar > 0.5) || focusedSystemBody || focusedGalaxyId
+    || (focusedEarthMoonPart && layerTarget.earthmoon > 0.5);
+  var mode = layerNow() + '|' + !!close + '|' + viewMode + '|' + demoMode;
+  var changed = sceneFrameDirty || mode !== sceneFrameMode;
+  if (changed) {
+    var left = 0, right = screenW, top = 0, bottom = screenH, scale = 1;
+    if (!demoMode && (screenW <= 780 || screenH <= 500)) {
+      left = 8; right = screenW - 8;
+      top = document.getElementById('brand').getBoundingClientRect().bottom + 12;
+      bottom = document.getElementById('sidebar').getBoundingClientRect().top - 12;
+      ['bar', 'moonBar'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (getComputedStyle(el).display !== 'none') bottom = Math.min(bottom, el.getBoundingClientRect().top - 12);
+      });
+      var badge = document.getElementById('moonBadge');
+      if (badge.classList.contains('show')) top = Math.max(top, badge.getBoundingClientRect().bottom + 12);
+      if (infoEl.classList.contains('show') && !document.body.classList.contains('search-open')) {
+        var info = infoEl.getBoundingClientRect();
+        if (screenW >= 600 && screenH <= 500) right = info.left - 12;
+        else bottom = Math.min(bottom, info.top - 12);
+      }
+      bottom = Math.max(top + 40, bottom);
+      var availableH = bottom - top, availableW = right - left;
+      scale = Math.min(1, availableH / (screenH * (close ? 0.28 : 1)), availableW / (screenH * 0.28));
+      if (!close && layerNow() === 'galaxy' && viewMode !== 'inside') {
+        var fitWidth = 0.9 * availableW * CFG.galaxy.camRadius * Math.tan(CFG.camera.fov * 0.5)
+          / (screenH * CFG.galaxy.radius);
+        scale = Math.min(scale, fitWidth);
+      }
+    }
+    sceneFrame = { x: (left + right) / 2, y: (top + bottom) / 2,
+      left: left, right: right, top: top, bottom: bottom, scale: Math.max(0.05, scale) };
+    sceneFrameDirty = false;
+    sceneFrameMode = mode;
+  }
+  if (!changed && projectionFov === cam.fov && projectionNear === cam.near) return;
+  M4.perspective(projMat, cam.fov, screenW / screenH, cam.near, CFG.camera.far);
+  projMat[0] *= sceneFrame.scale;
+  projMat[5] *= sceneFrame.scale;
+  projMat[8] = 1 - 2 * sceneFrame.x / screenW;
+  projMat[9] = 2 * sceneFrame.y / screenH - 1;
+  projectionFov = cam.fov;
+  projectionNear = cam.near;
+}
 
 /* ---- 19.1 背景星空 ---- */
 function drawBackgroundStars(time) {
@@ -8415,11 +8764,18 @@ function updateLayers(dt) {
 var lastTs = 0;
 var bootHidden = false;
 
+document.addEventListener('visibilitychange', function () {
+  lastTs = 0;
+  resetPerf(1.2);
+  for (var code in keys) keys[code] = false;
+});
+
 function frame(ts) {
   requestAnimationFrame(frame);
+  if (document.hidden) { lastTs = 0; return; }
 
-  if (!lastTs) lastTs = ts;
-  var dt = Math.min((ts - lastTs) / 1000, 0.1);
+  var frameDt = lastTs ? Math.max(0, (ts - lastTs) / 1000) : 0;
+  var dt = Math.min(frameDt, 0.1);
   lastTs = ts;
   simTime += dt;
 
@@ -8428,12 +8784,14 @@ function frame(ts) {
   updateStars(dt);      // 邻近恒星标记跟着银河自转，没进恒星层也要跑
   updateEarthMoon(dt);
   updateNav();          // 面包屑的逐级推进：只在空闲帧调 enter/exit
+  updateSearchNavigation();
   updateKeyPan(dt);
   updateDemoTour(dt);   // 演示巡游只改相机目标值，必须在 updateCamera 之前
   updateCamera(dt);
+  updateSceneFrame();
   updateScale(ts);      // 比例尺读的是本帧的相机半径与视场
   updateLayers(dt);
-  watchPerf(dt);
+  watchPerf(frameDt);
 
   // 视图矩阵：接近极点时换「上」向量，避免方向翻转
   var up = (cam.phi < 0.12 || cam.phi > Math.PI - 0.12) ? UP_Z : UP_Y;
@@ -8655,6 +9013,22 @@ window.__galaxy = {
 
   /* 当前视场角（弧度）。各层不同：本星系群 50°，其余 55°。 */
   fov: function () { return cam.fov; },
+  sceneFrame: function () {
+    return { x: sceneFrame.x, y: sceneFrame.y, left: sceneFrame.left, right: sceneFrame.right,
+      top: sceneFrame.top, bottom: sceneFrame.bottom, scale: sceneFrame.scale };
+  },
+  bodyScreen: function (id) {
+    var body = findBodyById(id);
+    if (!body) return null;
+    var p = projectToScreen(body.worldPos[0], body.worldPos[1], body.worldPos[2], viewMat, projMat);
+    return p ? { id: id, x: p.x, y: p.y, px: body.mesh.radius * p.pxPerUnit } : null;
+  },
+  screenToGalaxy: function (x, y) {
+    var world = galaxyPointAt(x, y);
+    if (!world) return null;
+    var p = projectToScreen(world[0], world[1], world[2], viewMat, projMat);
+    return p ? { world: world, x: p.x, y: p.y } : null;
+  },
 
   /* 相机完整快照。看背面的验收要比较 eye 与地球→月球的方向，dump()
    * 只有半径与注视点，缺 eye 就没法判断相机站在月球的哪一侧。 */
@@ -8872,6 +9246,7 @@ window.__galaxy = {
       orbits: orbitsVisible, labels: labelsVisible,
       dust: dustVisible, scale: scaleVisible,
       quality: (typeof quality === 'undefined' || !quality) ? null : quality.level,
+      qualityMode: quality ? quality.mode : null,
       /* 暗尘带只在「用户开着」且「画质档位允许」时才真正绘制；
        * 两个条件分开暴露，验收才能确认低画质不是把用户的开关改掉了。 */
       dustDrawn: (typeof quality === 'undefined' || !quality)
@@ -8891,10 +9266,15 @@ window.__galaxy = {
     return this.toggles();
   },
   setQuality: function (level) {
-    perf.done = true;
-    setQuality(level);
-    updateQualityButtons();
-    return this.toggles();
+    return chooseQuality(level) ? this.toggles() : null;
+  },
+  quality: function () {
+    return {
+      mode: quality.mode, level: quality.level, ratio: quality.ratio, dprCap: quality.dprCap,
+      galaxyParticles: galaxyData ? Math.max(1, Math.floor(galaxyData.count * quality.ratio)) : 0,
+      frames: perf.n, sampledSeconds: perf.acc, averageMs: perf.avg * 1000,
+      windows: perf.windows, warmupSeconds: perf.warm, locked: perf.done
+    };
   },
   moonControls: function () {
     function txt(id) {

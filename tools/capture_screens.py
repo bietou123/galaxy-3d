@@ -43,7 +43,7 @@ NO_ANIM = ("*{transition:none !important;animation:none !important;}"
 
 def boot(page, suffix):
     page.goto("about:blank")
-    page.goto(PAGE.as_uri() + suffix)
+    page.goto(PAGE.as_uri() + "?quality=high" + suffix)
     page.wait_for_selector("#boot.gone", state="attached", timeout=60000)
 
 
@@ -110,6 +110,8 @@ def main():
                 page.keyboard.press(key)
                 # 切视角会起一段相机补间，等它落定再截
                 ok = settle(page, state_name) and ok
+            if not ok:
+                errors.append(name + ": scene did not settle")
             page.wait_for_timeout(700)
             path = OUT / (name + ".jpg")
             page.screenshot(path=str(path), type="jpeg", quality=90)
@@ -117,6 +119,20 @@ def main():
             print("%s %-18s %-16s %4d KB%s  %s"
                   % ("OK  " if ok else "WARN", name, state_name, kb,
                      "  !超过 300KB" if kb > 300 else "", desc))
+
+        page.set_viewport_size({"width": 390, "height": 844})
+        for name, suffix, state_name in [
+            ("09-mobile-galaxy", "", "GALAXY_IDLE"),
+            ("10-mobile-moon", "#earthmoon/moon", "EARTHMOON_IDLE"),
+        ]:
+            boot(page, suffix)
+            ok = settle(page, state_name)
+            if not ok:
+                errors.append(name + ": scene did not settle")
+            page.wait_for_timeout(700)
+            page.screenshot(path=str(OUT / (name + ".jpg")), type="jpeg", quality=90)
+            print("%s %s" % ("OK  " if ok else "WARN", name))
+        page.set_viewport_size({"width": 1280, "height": 720})
 
         # 三档画质帧时间：同一银河视角，各采样 40 帧
         if "--shots-only" not in sys.argv:
